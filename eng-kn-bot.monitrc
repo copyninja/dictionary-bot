@@ -1,0 +1,5 @@
+check process python with pidfile /var/run/eng-kn-bot.pid
+start program = "/home/vasudev/Documents/sanchaya/kannada-dictionary-bot/start-eng-kan-bot.sh"
+stop program = "/home/vasudev/Documents/sanchaya/kannada-dictionary-bot/stop-eng-kn-bot.sh"
+group root
+
