@@ -27,37 +27,102 @@ import urllib
 import urllib2
 import os,sys
 from BeautifulSoup import BeautifulSoup
+import sqlite3
+
+conn = sqlite3.connect('wiktionary.sqlite')
+INSERT_STATMT = "INSERT INTO %s (word, meaning) values ('%s','%s')"
+SELECT_STATMT = "SELECT word, meaning from %s  where word='%s'"
+
 def get_def(word, src_lang,dest_lang):
+    meaning_from_db = None
+    try:
+        meaning_from_db = get_meaning_from_database(word,src_lang)
+    except:
+        pass    
+    if meaning_from_db != None:
+        return meaning_from_db[1]
     quotedfilename = urllib.quote(word.encode('utf-8')) 
-    link = "http://"+dest_lang+".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="+quotedfilename
+    link = "http://"+dest_lang.split('_')[0]+".wiktionary.org/w/api.php?action=parse&format=xml&prop=text|revid|displaytitle&callback=?&page="+quotedfilename
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     soup=None
+    meanings = None
     try:
         soup = BeautifulSoup(opener.open(link).read())
+        text=  BeautifulSoup(bs_preprocess(soup('text')[0].string))
+
+        for li in text('li'):
+            try:
+                if meanings==None:
+                    meanings =""
+                if li.a:
+                    meanings+=li.a.string+","
+                else:    
+                    meanings+=li.string+","
+            except:
+                pass   
+        if meanings!= None:
+            if src_lang == "ml_IN":
+                meanings = normalize_ml(meanings)
+            meanings = meanings.rstrip(',')
+            add_to_database(word, meanings,src_lang)
     except:
-		return None    
-    text=  BeautifulSoup(bs_preprocess(soup('text')[0].string))
-    meanings = None
-    for li in text('li'):
-		try:
-		    if meanings==None:
-			    meanings =""
-		    if li.a:
-		        meanings+=li.a.string+"\n"
-		    else:    
-		        meanings+=li.string+"\n"
-		except:
-			pass        
+		return None        
     return meanings
+
 def bs_preprocess(html):
     html = html.replace("&lt;","<")
     html = html.replace("&gt;",">")
     html = html.replace('&quot;','\'')
     return html 
+    
+def add_to_database(word, meaning,src_lang):
+    global conn,INSERT_STATMT
+    c = conn.cursor()
+
+    insert = None
+    if src_lang == "ml_IN":
+        insert = INSERT_STATMT % ("mlwiktionary",word,meaning)
+    elif src_lang == "kn_IN":
+        insert = INSERT_STATMT % ("knwiktionary",word,meaning)
+    c.execute(insert)
+    conn.commit()
+    c.close()
+
+
+def get_meaning_from_database(word,src_lang):
+    global conn,SELECT_STATMT
+
+    if src_lang == "ml_IN":
+        select = SELECT_STATMT % ("mlwiktionary",word)
+    elif src_lang == "kn_IN":
+        select = SELECT_STATMT % ("knwiktionary",word)
+    c = conn.cursor()
+    rows = c.execute(select)
+    result = None
+    for row in rows:
+        result = row
+    conn.commit()
+    c.close()
+    return result 
+    
+def normalize_ml (text):
+    text = text.replace(u"ൺ" , u"ണ്‍")
+    text = text.replace(u"ൻ", u"ന്‍")
+    text = text.replace(u"ർ", u"ര്‍")
+    text = text.replace(u"ൽ", u"ല്‍")
+    text = text.replace(u"ൾ", u"ള്‍")
+    text = text.replace(u"ൿ", u"ക്‍")
+    text = text.replace(u"ന്‍റ", u"ന്റ")
+    return text   
+    
 if __name__ == '__main__':
-    print get_def(u'ഉര്‍വീധരന്‍','ml','ml')
-    print get_def('Mars','ml','ml')
-    print get_def('help','ml','ml')
-    print get_def('father','ml','ml')
-    print get_def('fathehghghghr','ml','ml')
+    #add_to_database("hi","hello")
+    #get_meaning_from_database("hi")
+    #print get_def(u'ഉര്‍വീധരന്‍','ml_IN','ml_IN').encode("utf-8")
+    #print get_def('Mars','ml_IN','ml_IN').decode("utf-8")
+    #print get_def('help','ml','ml')
+    #print get_def('father','ml','ml')
+    #print get_def('fathehghghghr','ml','ml')
+    #print get_def('fat','ml','ml')
+    print get_def('welcome','kn_IN','kn_IN').encode('utf-8')

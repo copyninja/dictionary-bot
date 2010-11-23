@@ -44,6 +44,12 @@ class AuthorizationError: pass
 class NotImplemented: pass
 
 
+welcome_output = """ನಮಸ್ಕಾರ!
+ನಾನು ಇಂಗ್ಲೀಷ್ - ಕನ್ನಡ ಡಿಕ್ಷನರಿ ಬಾಟ್
+ನಾನು ಕನ್ನಡ ವೀಕ್ಷ್ನರಿಯ ಸಹಾಯದಿಂದ ಪದಗಳ ಅರ್ಥವನ್ನು ಹೇಳಬಲ್ಲೆ.
+ಅರ್ಥ ತಿಳಿಯಲು ಶಬ್ದವನ್ನು ನನಗೆ ಕಳುಹಿಸಿ.
+ಶುಭ ದಿನ!"""
+
 
 class Bot:
     """ The main bot class. """
@@ -85,13 +91,9 @@ class Bot:
         output= ""
         if  word :
             if word.lower() == "hi" or word.lower() == "hello":
-                output = "ನಮಸ್ಕಾರ! \n"    
-                output += "ನಾನು ಇಂಗ್ಲೀಷ್ - ಕನ್ನಡ ಡಿಕ್ಷನರಿ ಬಾಟ್"+"\n"
-                output += "ನಾನು ಕನ್ನಡ ವೀಕ್ಷ್ನರಿಯ ಸಹಾಯದಿಂದ ಪದಗಳ ಅರ್ಥವನ್ನು ಹೇಳಬಲ್ಲೆ."+"\n"
-                output += "ಅರ್ಥ ತಿಳಿಯಲು ಶಬ್ದವನ್ನು ನನಗೆ ಕಳುಹಿಸಿ"+"\n"
-                output += "ಶುಭ ದಿನ!"
+                output = welcome_output
             else:    
-                wikioutput  = wiktionary.get_def(word, "kn","kn")
+                wikioutput  = wiktionary.get_def(word, "kn_IN","kn_IN")
                 if wikioutput:
                     output += wikioutput.encode("utf-8")
                 if wikioutput==None:
