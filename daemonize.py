@@ -110,4 +110,5 @@ def daemonizer():
     os.dup(fd) # STDERR
     lfp = os.open(os.path.join(__RUNNING_DIR__,"run",LOCK_FILE),os.O_RDWR|os.O_CREAT)
     os.write(lfp,str(os.getpid())+"\n")
+    os.close(lfp)
     return 0
