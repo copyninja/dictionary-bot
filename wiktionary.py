@@ -29,12 +29,18 @@ import os,sys
 from BeautifulSoup import BeautifulSoup
 import sqlite3
 
-conn = sqlite3.connect('wiktionary.sqlite')
+
 INSERT_STATMT = "INSERT INTO %s (word, meaning) values ('%s','%s')"
 SELECT_STATMT = "SELECT word, meaning from %s  where word='%s'"
 
+# def logger(message):
+#     fp = os.open('wiktionary.log',os.O_RDWR)
+#     os.write(fp,message)
+#     os.close(fp)
+
 def get_def(word, src_lang,dest_lang):
     meaning_from_db = None
+    # logger(word)
     try:
         meaning_from_db = get_meaning_from_database(word,src_lang)
     except:
@@ -66,9 +72,9 @@ def get_def(word, src_lang,dest_lang):
                 meanings = normalize_ml(meanings)
             meanings = meanings.rstrip(',')
             add_to_database(word, meanings,src_lang)
+            return meanings
     except:
-		return None        
-    return meanings
+        return None   
 
 def bs_preprocess(html):
     html = html.replace("&lt;","<")
@@ -77,7 +83,8 @@ def bs_preprocess(html):
     return html 
     
 def add_to_database(word, meaning,src_lang):
-    global conn,INSERT_STATMT
+    global INSERT_STATMT
+    conn = sqlite3.connect('/home/vasudev/kannada-dictionary-bot/wiktionary.sqlite')
     c = conn.cursor()
 
     insert = None
@@ -88,11 +95,13 @@ def add_to_database(word, meaning,src_lang):
     c.execute(insert)
     conn.commit()
     c.close()
+    conn.close()
 
 
 def get_meaning_from_database(word,src_lang):
-    global conn,SELECT_STATMT
+    global SELECT_STATMT
 
+    conn = sqlite3.connect('/home/vasudev/kannada-dictionary-bot/wiktionary.sqlite')
     if src_lang == "ml_IN":
         select = SELECT_STATMT % ("mlwiktionary",word)
     elif src_lang == "kn_IN":
@@ -125,4 +134,4 @@ if __name__ == '__main__':
     #print get_def('father','ml','ml')
     #print get_def('fathehghghghr','ml','ml')
     #print get_def('fat','ml','ml')
-    print get_def('welcome','kn_IN','kn_IN').encode('utf-8')
+    print get_def('aeroplane','kn_IN','kn_IN').encode('utf-8')
