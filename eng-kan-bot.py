@@ -27,10 +27,6 @@ from loghandler import get_logger
 from daemonize import *
 import wiktionary
 
-# Configure the Daemon
-set_lockfile("eng-kn-bot.pid")
-set_logfile("eng-kn-bot.log")
-logger = get_logger('kn-dictionary-bot',get_daemon_log(),"error") # only error and exceptions are logged
 
 
 # Jabber auth
@@ -54,9 +50,10 @@ welcome_output = """ನಮಸ್ಕಾರ!
 class Bot:
     """ The main bot class. """
 
-    def __init__(self, JID, Password):
+    def __init__(self,logger, JID, Password):
         """ Create a new bot. Connect to the server and log in. """
 
+        self.logger = logger
         # connect...
         jid = xmpp.JID(JID)
         self.connection = xmpp.Client(jid.getDomain(), debug=[])
@@ -106,13 +103,20 @@ class Bot:
             if presence.getType() == 'subscribe':
                 jabber_id = presence.getFrom().getStripped()
                 self.connection.getRoster().Authorize(jabber_id)
-            logger.debug(presence.getFrom().getStripped())
+            self.logger.debug(presence.getFrom().getStripped())
             
 
 if __name__ == "__main__":
+    # Configure the Daemon
+    set_lockfile("eng-kn-bot.pid")
+    set_logfile("eng-kn-bot.log")
+    
+    daemonizer()
+
+    # Get logger this is done later to avoid closing logger files when daemonizing
+    logger = get_logger('kn-dictionary-bot',get_daemon_log(),"debug") # only error and exceptions are logged
     try:
-        daemonizer()
-        bot = Bot(**options)
+        bot = Bot(logger,**options)
         bot.loop()
     except:
         logger.exception("Something Went Wrong!")
