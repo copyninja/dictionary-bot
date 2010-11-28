@@ -32,7 +32,7 @@ import wiktionary
 # Jabber auth
 options = {
     'JID': 'kn-dictionary-bot@jabber.org',
-    'Password': 'k4d4abotdictionary',
+    'Password': 'XXXXXXXXXX',
 }
  
 class ConnectionError: pass
