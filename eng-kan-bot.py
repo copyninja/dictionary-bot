@@ -32,7 +32,7 @@ import wiktionary
 # Jabber auth
 options = {
     'JID': 'kn-dictionary-bot@jabber.org',
-    'Password': 'XXXXXXXXXX',
+    'Password': 'XXXXXX',
 }
  
 class ConnectionError: pass
@@ -90,7 +90,7 @@ class Bot:
             if word.lower() == "hi" or word.lower() == "hello":
                 output = welcome_output
             else:    
-                wikioutput  = wiktionary.get_def(word, "kn_IN","kn_IN")
+                wikioutput  = wiktionary.get_def(word.lower(), "kn_IN","kn_IN")
                 if wikioutput:
                     output += wikioutput.encode("utf-8")
                 if wikioutput==None:
@@ -103,7 +103,7 @@ class Bot:
             if presence.getType() == 'subscribe':
                 jabber_id = presence.getFrom().getStripped()
                 self.connection.getRoster().Authorize(jabber_id)
-            self.logger.debug(presence.getFrom().getStripped())
+            #self.logger.debug(presence.getFrom().getStripped())
             
 
 if __name__ == "__main__":
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     daemonizer()
 
     # Get logger this is done later to avoid closing logger files when daemonizing
-    logger = get_logger('kn-dictionary-bot',get_daemon_log(),"debug") # only error and exceptions are logged
+    logger = get_logger('kn-dictionary-bot',get_daemon_log(),"error") # only error and exceptions are logged
     try:
         bot = Bot(logger,**options)
         bot.loop()
