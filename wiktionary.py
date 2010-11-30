@@ -33,6 +33,10 @@ import sqlite3
 INSERT_STATMT = "INSERT INTO %s (word, meaning) values ('%s','%s')"
 SELECT_STATMT = "SELECT word, meaning from %s  where word='%s'"
 
+INSERT_UNDEFINED = "INSERT INTO undefined_words (word,frequency) values ('%s',%d)"
+UPDATE_UNDEFINED = "UPDATE undefined_words set frequency = frequency + 1 where word = '%s'"
+SELECT_UNDEFINED = "SELECT count(*) from undefined_words where word = '%s'"
+
 # def logger(message):
 #     fp = os.open('wiktionary.log',os.O_RDWR)
 #     os.write(fp,message)
@@ -81,7 +85,10 @@ def get_def(word, src_lang,dest_lang):
             add_to_database(word, meanings,src_lang)
             return meanings
     except:
-        return None   
+        pass
+    
+    add_undefined(word)
+    return None
 
 def bs_preprocess(html):
     html = html.replace("&lt;","<")
@@ -103,6 +110,24 @@ def add_to_database(word, meaning,src_lang):
     conn.commit()
     c.close()
     conn.close()
+
+def add_undefined(word):
+    global INSERT_UNDEFINED,SELECT_UNDEFINED,UPDATE_UNDEFINED
+    conn = sqlite3.connect('/home/vasudev/kannada-dictionary-bot/wiktionary.sqlite')
+    c = conn.cursor()
+
+    c.execute(SELECT_UNDEFINED % (word))
+    count = c.fetchone()
+    if count[0] == 0:
+        c.execute(INSERT_UNDEFINED % (word,1))
+    else:
+        c.execute(UPDATE_UNDEFINED % (word))
+
+    conn.commit()
+    c.close()
+    conn.close()
+    
+    
 
 
 def get_meaning_from_database(word,src_lang):
@@ -141,4 +166,4 @@ if __name__ == '__main__':
     #print get_def('father','ml','ml')
     #print get_def('fathehghghghr','ml','ml')
     #print get_def('fat','ml','ml')
-    print get_def(u'ಅಂಕಣ','kn_IN','kn_IN').encode('utf-8')
+    print get_def('aaaa','kn_IN','kn_IN').encode('utf-8')
