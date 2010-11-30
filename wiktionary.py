@@ -61,16 +61,23 @@ def get_def(word, src_lang,dest_lang):
             try:
                 if meanings==None:
                     meanings =""
-                if li.a:
-                    meanings+=li.a.string+","
+
+                a = li('a')
+
+                if isinstance(a,list):
+                    for link in a:
+                        meanings += link.string+", "
+                elif li.a:
+                    meanings+=li.a.string+", "
                 else:    
-                    meanings+=li.string+","
+                    meanings+=li.string+", "
+
             except:
                 pass   
         if meanings!= None:
             if src_lang == "ml_IN":
                 meanings = normalize_ml(meanings)
-            meanings = meanings.rstrip(',')
+            meanings = meanings.rstrip(', ')
             add_to_database(word, meanings,src_lang)
             return meanings
     except:
@@ -134,4 +141,4 @@ if __name__ == '__main__':
     #print get_def('father','ml','ml')
     #print get_def('fathehghghghr','ml','ml')
     #print get_def('fat','ml','ml')
-    print get_def('aeroplane','kn_IN','kn_IN').encode('utf-8')
+    print get_def(u'ಅಂಕಣ','kn_IN','kn_IN').encode('utf-8')
