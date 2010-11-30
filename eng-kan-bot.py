@@ -26,13 +26,14 @@ from xmpp.protocol import *
 from loghandler import get_logger
 from daemonize import *
 import wiktionary
+import sqlite3
 
 
 
 # Jabber auth
 options = {
     'JID': 'kn-dictionary-bot@jabber.org',
-    'Password': 'XXXXXX',
+    'Password': 'k4d4abotdictionary',
 }
  
 class ConnectionError: pass
@@ -40,12 +41,25 @@ class AuthorizationError: pass
 class NotImplemented: pass
 
 
+INSERT_MEANING = "INSERT INTO users_meanings (word,meaning,user) values ('%s','%s','%s')"
+
 welcome_output = """ನಮಸ್ಕಾರ!
 ನಾನು ಇಂಗ್ಲೀಷ್ - ಕನ್ನಡ ಡಿಕ್ಷನರಿ ಬಾಟ್
 ನಾನು ಕನ್ನಡ ವೀಕ್ಷ್ನರಿಯ ಸಹಾಯದಿಂದ ಪದಗಳ ಅರ್ಥವನ್ನು ಹೇಳಬಲ್ಲೆ.
 ಅರ್ಥ ತಿಳಿಯಲು ಶಬ್ದವನ್ನು ನನಗೆ ಕಳುಹಿಸಿ.
 ಶುಭ ದಿನ!"""
 
+not_found_output = """
+ನೀವು ಪದಕ್ಕೆ ಅರ್ಥ ಸೇರಿಸಬೇಕಿದ್ದರೆ,
+#add <english-word> <ಕನ್ನಡದ ಅರ್ಥ> ಬರೆದು ಕಳಿಸಿ.
+ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ಅರ್ಥಗಳಿದ್ದರೆ "," ಬಳಸಿ.  
+"""
+
+thanks_output = """
+ಪದವನ್ನು ಸೇರಿಸಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು.
+ಎಲ್ಲಾ ಪದಗಳನ್ನು ವಿಕಿಷನರಿ ತಂಡಕ್ಕೆ ಕಳಿಸಬೇಕಾದ್ದರಿಂದ ಸಲ್ಪ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.
+ಒಮ್ಮೆ ಪದಗಳನ್ನು ವಿಕಿಷನರಿ ಗೆ ಸೇರಿಸಿದ ಬಳಿಕ ಅವನ್ನು ಬಳಸಬಹುದು. 
+"""
 
 class Bot:
     """ The main bot class. """
@@ -89,12 +103,19 @@ class Bot:
         if  word :
             if word.lower() == "hi" or word.lower() == "hello":
                 output = welcome_output
+            elif word.startswith("#add"):
+                message = word.split(' ')
+                if len(message) < 3:
+                    output = "ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!\n" + not_found_output
+                else:
+                    self.add_meaning(message[1],' '.join(message[2:]),message_node.getFrom())
+                    output = thanks_output
             else:    
                 wikioutput  = wiktionary.get_def(word.lower(), "kn_IN","kn_IN")
                 if wikioutput:
                     output += wikioutput.encode("utf-8")
                 if wikioutput==None:
-                    output = "ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!"
+                    output = not_found_output
             conn.send( xmpp.Message( message_node.getFrom() ,output))    
                     
     def presenceHandler(self, conn, presence):
@@ -104,7 +125,15 @@ class Bot:
                 jabber_id = presence.getFrom().getStripped()
                 self.connection.getRoster().Authorize(jabber_id)
             #self.logger.debug(presence.getFrom().getStripped())
-            
+
+    def add_meaning(self,word,meaning,user):
+        global INSERT_MEANING
+        conn = sqlite3.connect('/home/vasudev/kannada-dictionary-bot/wiktionary.sqlite')
+        c = conn.cursor()
+        c.execute(INSERT_MEANING % (word,meaning,user))
+        conn.commit()
+        c.close()
+        conn.close()
 
 if __name__ == "__main__":
     # Configure the Daemon
@@ -114,7 +143,7 @@ if __name__ == "__main__":
     daemonizer()
 
     # Get logger this is done later to avoid closing logger files when daemonizing
-    logger = get_logger('kn-dictionary-bot',get_daemon_log(),"error") # only error and exceptions are logged
+    logger = get_logger('kn-dictionary-bot',get_daemon_log(),"debug") # only error and exceptions are logged
     try:
         bot = Bot(logger,**options)
         bot.loop()
