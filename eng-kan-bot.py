@@ -27,6 +27,7 @@ from loghandler import get_logger
 from daemonize import *
 import wiktionary
 import sqlite3
+import re
 
 
 
@@ -51,8 +52,8 @@ welcome_output = """ನಮಸ್ಕಾರ!
 
 not_found_output = """
 ನೀವು ಪದಕ್ಕೆ ಅರ್ಥ ಸೇರಿಸಬೇಕಿದ್ದರೆ,
-#add <english-word> <ಕನ್ನಡದ ಅರ್ಥ> ಬರೆದು ಕಳಿಸಿ.
-ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ಅರ್ಥಗಳಿದ್ದರೆ "," ಬಳಸಿ.  
+#add english-word: ಕನ್ನಡದ ಅರ್ಥ
+ಬರೆದು ಕಳಿಸಿ.ಒಂದಕ್ಕಿಂತ ಹೆಚ್ಚು ಅರ್ಥಗಳಿದ್ದರೆ "," ಬಳಸಿ.  
 """
 
 thanks_output = """
@@ -60,6 +61,8 @@ thanks_output = """
 ಎಲ್ಲಾ ಪದಗಳನ್ನು ವಿಕಿಷನರಿ ತಂಡಕ್ಕೆ ಕಳಿಸಬೇಕಾದ್ದರಿಂದ ಸಲ್ಪ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.
 ಒಮ್ಮೆ ಪದಗಳನ್ನು ವಿಕಿಷನರಿ ಗೆ ಸೇರಿಸಿದ ಬಳಿಕ ಅವನ್ನು ಬಳಸಬಹುದು. 
 """
+
+meanings_pattern = re.compile('#add\s([a-zA-z\s]+):\s(.+)')
 
 class Bot:
     """ The main bot class. """
@@ -104,18 +107,18 @@ class Bot:
             if word.lower() == "hi" or word.lower() == "hello":
                 output = welcome_output
             elif word.startswith("#add"):
-                message = word.split(' ')
-                if len(message) < 3:
-                    output = "ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!\n" + not_found_output
+                message = meanings_pattern.findall(word)
+                if len(message) < 1 or len(message[0]) < 2:
+                    output = not_found_output
                 else:
-                    self.add_meaning(message[1],' '.join(message[2:]),message_node.getFrom())
+                    self.add_meaning(message[0][0],message[0][1],message_node.getFrom())
                     output = thanks_output
             else:    
                 wikioutput  = wiktionary.get_def(word.lower(), "kn_IN","kn_IN")
                 if wikioutput:
                     output += wikioutput.encode("utf-8")
                 if wikioutput==None:
-                    output = not_found_output
+                    output = "ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!\n" + not_found_output
             conn.send( xmpp.Message( message_node.getFrom() ,output))    
                     
     def presenceHandler(self, conn, presence):
