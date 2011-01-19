@@ -98,7 +98,7 @@ def bs_preprocess(html):
     
 def add_to_database(word, meaning,src_lang):
     global INSERT_STATMT
-    conn = sqlite3.connect('/home/vasudev/kannada-dictionary-bot/wiktionary.sqlite')
+    conn = sqlite3.connect('/opt/bots/kannada-dictionary-bot/wiktionary.sqlite')
     c = conn.cursor()
 
     insert = None
@@ -113,7 +113,7 @@ def add_to_database(word, meaning,src_lang):
 
 def add_undefined(word):
     global INSERT_UNDEFINED,SELECT_UNDEFINED,UPDATE_UNDEFINED
-    conn = sqlite3.connect('/home/vasudev/kannada-dictionary-bot/wiktionary.sqlite')
+    conn = sqlite3.connect('/opt/bots/kannada-dictionary-bot/wiktionary.sqlite')
     c = conn.cursor()
 
     c.execute(SELECT_UNDEFINED % (word))
@@ -133,7 +133,7 @@ def add_undefined(word):
 def get_meaning_from_database(word,src_lang):
     global SELECT_STATMT
 
-    conn = sqlite3.connect('/home/vasudev/kannada-dictionary-bot/wiktionary.sqlite')
+    conn = sqlite3.connect('/opt/bots/kannada-dictionary-bot/wiktionary.sqlite')
     if src_lang == "ml_IN":
         select = SELECT_STATMT % ("mlwiktionary",word)
     elif src_lang == "kn_IN":
