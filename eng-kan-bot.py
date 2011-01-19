@@ -33,8 +33,8 @@ import re
 
 # Jabber auth
 options = {
-    'JID': 'kn-dictionary-bot@jabber.org',
-    'Password': 'k4d4abotdictionary',
+    'JID': 'kn.dict.bot@jabber.org',
+    'Password': 'xxxxxxxxxxxxxxxx',
 }
  
 class ConnectionError: pass
