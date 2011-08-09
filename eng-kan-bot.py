@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# eng-kn-bot.py A Jabber buddy bot which provide eng-mal dictionary lookup service
+# eng-kn-bot.py A Jabber buddy bot which provide eng-kan dictionary lookup service
 #       
 # Copyright (c) 2009
 #     Santhosh Thottingal <santhosh.thottingal@gmail.com>
@@ -138,6 +138,7 @@ class Bot:
                     pass
                 if suggestion_output > "":
                     output += u"ಸಲಹೆಗಳು: \n" + suggestion_output
+                    logger.debug(output)
                                 
             conn.send( xmpp.Message( message_node.getFrom() ,output))    
                     
