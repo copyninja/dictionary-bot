@@ -32,7 +32,7 @@ import hunspell
 
 
 # English word suggestions
-hun = hun.Hunspell("/usr/share/myspell/dicts/en_US.dic","/usr/share/myspell/dicts/en_US.aff")
+hun = hunspell.Hunspell("/usr/share/myspell/dicts/en_US.dic","/usr/share/myspell/dicts/en_US.aff")
 
 
 
