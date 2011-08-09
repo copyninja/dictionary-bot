@@ -28,11 +28,11 @@ from daemonize import *
 import wiktionary
 import sqlite3
 import re
-from hunspell import Hunspell
+import hunspell
 
 
 # English word suggestions
-hun = Hunspell("/usr/share/myspell/dicts/en_US.dic","/usr/share/myspell/dicts/en_US.aff")
+hun = hun.Hunspell("/usr/share/myspell/dicts/en_US.dic","/usr/share/myspell/dicts/en_US.aff")
 
 
 
