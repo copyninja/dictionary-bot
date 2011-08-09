@@ -28,13 +28,19 @@ from daemonize import *
 import wiktionary
 import sqlite3
 import re
+from hunspell import Hunspell
+
+
+# English word suggestions
+hun = Hunspell("/usr/share/myspell/dicts/en_US.dic","/usr/share/myspell/dicts/en_US.aff")
 
 
 
 # Jabber auth
 options = {
-    'JID': 'kn.dict.bot@jabber.org',
-    'Password': 'xxxxxxxxxxxxxxxx',
+#    'JID': 'kn.dict.bot@jabber.org',
+    'JID': 'kn-dictionary-bot@jabber.org',
+    'Password': 'k4d4abotdictionary',
 }
  
 class ConnectionError: pass
@@ -119,6 +125,20 @@ class Bot:
                     output += wikioutput.encode("utf-8")
                 if wikioutput==None:
                     output = "ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!\n" + not_found_output
+                suggestion_output = ""
+
+                try:
+                    if not hun.spell(word.lower()):
+                        suggestions = hun.suggest(word.lower())
+
+                        for suggestion in suggestions:
+                            if not (wiktionary.get_def(suggestion)):
+                                suggestion_output += "\t" + suggestion + "\n"
+                except:
+                    pass
+                if suggestion_output > "":
+                    output += u"ಸಲಹೆಗಳು: \n" + suggestion_output
+                                
             conn.send( xmpp.Message( message_node.getFrom() ,output))    
                     
     def presenceHandler(self, conn, presence):
