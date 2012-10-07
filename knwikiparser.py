@@ -52,6 +52,7 @@ class KNWiktionaryParser:
                     def_list.append(a.string)
         except Exception as e:
             self.logger.exception('Something went wrong: {0}'.format(e.message))
+            self.logger.debug('Message fetched from wiktionary:\n' + soup.string)
             pass
         
         return (wtype,','.join(def_list)) if len(word) > 0 and len(wtype) > 0 and len(def_list) > 0 else None
