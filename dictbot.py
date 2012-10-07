@@ -74,20 +74,22 @@ class DictBot(EventHandler, XMPPFeatureHandler):
 
     @message_stanza_handler()
     def handle_message(self, stanza):
-        """Echo every non-error ``<message/>`` stanza.
-        
-        Add "Re: " to subject, if any.
         """
-        print stanza.body
+          Handle the request messages
+        """
         if stanza.subject:
             subject = u"Re: " + stanza.subject
         else:
             subject = None
-        msg = Message(stanza_type = stanza.stanza_type,
-                        from_jid = stanza.to_jid, to_jid = stanza.from_jid,
-                        subject = subject, body = stanza.body,
-                        thread = stanza.thread)
-        return msg
+
+        if stanza.body:
+            body = stanza.body.lower().strip()
+            if body == 'hello' or body == 'hi':
+                return Message(stanza_type = stanza.stanza_type,
+                              from_jid = stanza.to_jid, to_jid = stanza.from_jid,
+                              subject = subject, body = welcome_output.decode('utf-8'),
+                              thread = stanza.thread)
+
 
     @event_handler(DisconnectedEvent)
     def handle_disconnected(self, event):
@@ -106,10 +108,10 @@ def prepare_logger(debug=0):
     
     if debug == 1:
         handler.setLevel(logging.DEBUG)
-        logger.setLevel(logging.DEBUG)        
+        logger.setLevel(logging.DEBUG)
     else:
         handler.setLevel(logging.ERROR)
-        logging.setLevel(logging.ERROR)
+        logger.setLevel(logging.ERROR)
         
     logger.addHandler(handler)
 
@@ -120,7 +122,6 @@ def main():
     conffile = 'dictbot.conf' if os.path.exists(os.path.join(os.path.dirname(__file__),
                                                              "dictbot.conf")) else "/etc/dictbot.conf"
     config = yaml.load(open(conffile).read())
-
     network_section = config.get('network')
     wiktionary_section = config.get('wiktionary')
     authorization_section = config.get('authorization')
