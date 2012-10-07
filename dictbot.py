@@ -8,6 +8,7 @@ import yaml
 from logging.handlers import TimedRotatingFileHandler
 
 from constants import *
+from knwikiparser import KNWiktionaryParser
 
 from pyxmpp2.jid import JID
 from pyxmpp2.message import Message
@@ -25,10 +26,13 @@ class DictBot(EventHandler, XMPPFeatureHandler):
     '''
      Dictionary bot implementation
     '''
-    def __init__ (self, my_jid, settings, logger, url):
+    def __init__ (self, my_jid, settings, logger, url, lang):
         version_provider = VersionProvider(settings)
         self.client = Client(my_jid, [self, version_provider], settings)
         self.logger = logger
+        self.parser = None
+        if lang == 'kn':
+            self.parser = KNWiktionaryParser(url, self.logger)
         
     def run(self):
         '''
@@ -83,12 +87,23 @@ class DictBot(EventHandler, XMPPFeatureHandler):
             subject = None
 
         if stanza.body:
+            msg = Message(stanza_type = stanza.stanza_type,
+                          from_jid = stanza.to_jid, to_jid = stanza.from_jid,
+                          subject = subject,thread = stanza.thread)  
             body = stanza.body.lower().strip()
             if body == 'hello' or body == 'hi':
-                return Message(stanza_type = stanza.stanza_type,
-                              from_jid = stanza.to_jid, to_jid = stanza.from_jid,
-                              subject = subject, body = welcome_output.decode('utf-8'),
-                              thread = stanza.thread)
+                msg.body = welcome_output.decode('utf-8')
+            elif not body.startswith('#'):
+                parsed_data = self.parser.get_meaning(body)
+                if parsed_data:
+                    wordtype,meanings = parsed_data
+                    if meanings:
+                        msg.body = '\nWord Type: ' + wordtype + '\n'
+                        msg.body += 'Meanings: \n'
+                        for meaning in meanings.split(','):
+                            msg.body += meaning + '\n'
+            
+            return msg
 
 
     @event_handler(DisconnectedEvent)
@@ -132,9 +147,13 @@ def main():
     server = network_section.get('server')
     prefer_ipv6 = network_section.get('prefer_ipv6')
     starttls = True if network_section.get('starttls') == 1 else False
+
+    language = wiktionary_section.get('language')
+    api_url = wiktionary_section.get('wiktionary_url')
+    url = 'http://' + language + '.' + api_url
     
     debug = True if config.get('debug') == 1 else False
-    url = 'http://' + wiktionary_section.get('language') + wiktionary_section.get('wiktionary_url')
+
 
     if debug:
         logger = prepare_logger(1)
@@ -148,7 +167,7 @@ def main():
             'starttls': starttls
             })
     
-    bot = DictBot(JID(jid), settings, logger, url)
+    bot = DictBot(JID(jid), settings, logger, url, language)
     try:
         bot.run()
     except KeyboardInterrupt:
