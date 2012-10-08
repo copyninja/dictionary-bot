@@ -31,8 +31,10 @@ class KNWiktionaryParser:
 
     def get_meaning(self, word):
         self.logger.debug(word)
-        def_list = []
-        wtype = ""            
+        meanings = {}
+        wtypes = []
+        meanings_list = []
+        
         try:
             # Remove () from the output
             tmp = self.__connect(word).lstrip('(').rstrip(')')
@@ -42,26 +44,28 @@ class KNWiktionaryParser:
             soup = BeautifulSoup(html_content)
 
             # H3 has word type
-            h3 = soup.find("h3")
-            wtype = h3.find("span",{
+            h3s = soup.findAll("h3")
+            for h3 in h3s:        
+                wtypes.append(h3.find("span",{
                     "class" : "mw-headline"
-                    }).string
-            meaning_list = soup.find("ol")
-            for li in meaning_list.findAll("li"):
-                for a in li.findAll("a"):
-                    def_list.append(a.string)
+                    }).string)
+                    
+            ols = soup.findAll("ol")
+            for ol in ols:
+                def_list = []
+                for li in ol.findAll("li"):
+                    for a in li.findAll("a"):
+                        def_list.append(a.string)
+                meanings_list.append(def_list)
+                
+            meanings['wtypes'] = wtypes
+            meanings['definitions'] = meanings_list
         except Exception as e:
             self.logger.exception('Something went wrong: {0}'.format(e.message))
             pass
-        
-        return (wtype,','.join(def_list)) if len(word) > 0 and len(wtype) > 0 and len(def_list) > 0 else None
-        
-    def __bs_preprocess(self,html):
-        html = html.replace("&lt;","<")
-        html = html.replace("&gt;",">")
-        html = html.replace('&quot;','\'')
-        return html 
 
+        return meanings
+        
         
 
 
