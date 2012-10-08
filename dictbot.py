@@ -94,16 +94,26 @@ class DictBot(EventHandler, XMPPFeatureHandler):
             if body == 'hello' or body == 'hi':
                 msg.body = welcome_output.decode('utf-8')
             elif not body.startswith('#'):
-                parsed_data = self.parser.get_meaning(body)
-                if parsed_data:
-                    wordtype,meanings = parsed_data
-                    if meanings:
-                        msg.body = '\nWord Type: ' + wordtype + '\n'
-                        msg.body += 'Meanings: \n'
-                        for meaning in meanings.split(','):
-                            msg.body += meaning + '\n'
+                meanings = self.parser.get_meaning(body)
+                reply = self._prepare_reply(meanings)
+                if reply:
+                    msg.body = reply
+                else:
+                    msg.body = u"ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!\n"
             
             return msg
+
+    def _prepare_reply(self, meanings):
+        reply = ''
+        i = 0
+        for wtype in meanings.get('wtypes'):
+            reply += '\n' + wtype + ': \n'
+            defs = meanings.get('definitions')
+            reply += ','.join(defs[i])
+            i += 1
+        self.logger.debug(reply)
+        return reply if len(reply) > 0 else None
+                
 
 
     @event_handler(DisconnectedEvent)
