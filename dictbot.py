@@ -4,6 +4,7 @@
 import os
 import logging
 import yaml
+import xml.etree.ElementTree as ET
 
 from logging.handlers import TimedRotatingFileHandler
 
@@ -97,24 +98,32 @@ class DictBot(EventHandler, XMPPFeatureHandler):
                 meanings = self.parser.get_meaning(body)
                 reply = self._prepare_reply(meanings)
                 if reply:
-                    msg.body = reply
+                    msg.body,xml_payload = reply
+                    tree = ET.fromstring(xml_payload)
+                    msg.add_payload(tree)                                
                 else:
                     msg.body = u"ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!\n"
-            
+                    
             return msg
 
     def _prepare_reply(self, meanings):
         reply = ''
+        xml = xhtml_im_header
         i = 0
         for wtype in meanings.get('wtypes'):
             reply += '\n' + wtype + ': \n'
+            xml += '<br/><strong>' + wtype +': </strong><br/>'
+            
             defs = meanings.get('definitions')
+            
             reply += ','.join(defs[i])
+            xml += '<p>' + ','.join(defs[i]) + '</p><br/>'
             i += 1
-        self.logger.debug(reply)
-        return reply if len(reply) > 0 else None
-                
 
+        xml += xhtml_im_footer
+        self.logger.debug(reply)
+        
+        return (reply,xml.encode('utf-8')) if len(reply) > 0 else None
 
     @event_handler(DisconnectedEvent)
     def handle_disconnected(self, event):
