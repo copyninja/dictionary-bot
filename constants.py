@@ -18,3 +18,13 @@ thanks_output = """
 ಎಲ್ಲಾ ಪದಗಳನ್ನು ವಿಕಿಷನರಿ ತಂಡಕ್ಕೆ ಕಳಿಸಬೇಕಾದ್ದರಿಂದ ಸಲ್ಪ ಸಮಯ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.
 ಒಮ್ಮೆ ಪದಗಳನ್ನು ವಿಕಿಷನರಿ ಗೆ ಸೇರಿಸಿದ ಬಳಿಕ ಅವನ್ನು ಬಳಸಬಹುದು. 
 """
+
+xhtml_im_header = """
+<html xmlns='http://jabber.org/protocol/xhtml-im'>
+  <body xmlns='http://www.w3.org/1999/xhtml'>
+"""
+
+xhtml_im_footer = """
+  </body>
+</html>
+"""
