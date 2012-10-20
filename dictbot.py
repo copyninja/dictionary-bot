@@ -1,196 +1,110 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
+#-*- coding: utf-8 -*-
 
-import os
-import logging
-import yaml
-import xml.etree.ElementTree as ET
+import sys, os, sleekxmpp, yaml
+from argparse import ArgumentParser
 
-from logging.handlers import TimedRotatingFileHandler
+# Python versions before 3.0 do not use UTF-8 encoding
+# by default. To ensure that Unicode is handled properly
+# throughout SleekXMPP, we will set the default encoding
+# ourselves to UTF-8.
+if sys.version_info < (3, 0):
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+else:
+    raw_input = input
 
-from constants import *
-from knwikiparser import KNWiktionaryParser
+class DictBot(sleekxmpp.ClientXMPP):
+    """
+      A dictionary bot which recieves words as input from any language
+      looks up the meaning from the respective wiktionary and responds
+      with proper formatted output
 
-from pyxmpp2.jid import JID
-from pyxmpp2.message import Message
-from pyxmpp2.presence import Presence
-from pyxmpp2.client import Client
-from pyxmpp2.settings import XMPPSettings
-from pyxmpp2.interfaces import EventHandler, event_handler, QUIT
-from pyxmpp2.streamevents import AuthorizedEvent, DisconnectedEvent
-from pyxmpp2.interfaces import XMPPFeatureHandler
-from pyxmpp2.interfaces import presence_stanza_handler, message_stanza_handler
-from pyxmpp2.ext.version import VersionProvider
-
-
-class DictBot(EventHandler, XMPPFeatureHandler):
-    '''
-     Dictionary bot implementation
-    '''
-    def __init__ (self, my_jid, settings, logger, url, lang):
-        version_provider = VersionProvider(settings)
-        self.client = Client(my_jid, [self, version_provider], settings)
-        self.logger = logger
-        self.parser = None
-        if lang == 'kn':
-            self.parser = KNWiktionaryParser(url, self.logger)
+      If meaning is not found it responds with a data form asking user
+      to input the meanings types etc.
+    """
+    def __init__(self, jid, password):
         
-    def run(self):
-        '''
-         Request client connection and start mainloop
-        '''
-        self.client.connect()
-        self.client.run()
+        sleekxmpp.ClientXMPP.__init__(self, jid, password)
+        self.add_event_handler("session_start", self.start)
 
-    def disconnect(self):
-        '''
-         Request disconnection and let the main loop run for a 2 more
-         seconds for graceful disconnection
-        '''
-        self.client.disconnect()
-        self.client.run(timeout=2)
-    @presence_stanza_handler("subscribe")
-    def handle_presence_subscribe(self, stanza):
-        self.logger.info(u"{0} requested presence subscription"
-                                                    .format(stanza.from_jid))
-        presence = Presence(to_jid = stanza.from_jid.bare(),
-                                                    stanza_type = "subscribe")
-        return [stanza.make_accept_response(), presence]
 
-    @presence_stanza_handler("subscribed")
-    def handle_presence_subscribed(self, stanza):
-        self.logger.info(u"{0!r} accepted our subscription request"
-                                                    .format(stanza.from_jid))
-        return True
-
-    @presence_stanza_handler("unsubscribe")
-    def handle_presence_unsubscribe(self, stanza):
-        self.logger.info(u"{0} canceled presence subscription"
-                                                    .format(stanza.from_jid))
-        presence = Presence(to_jid = stanza.from_jid.bare(),
-                                                    stanza_type = "unsubscribe")
-        return [stanza.make_accept_response(), presence]
-
-    @presence_stanza_handler("unsubscribed")
-    def handle_presence_unsubscribed(self, stanza):
-        self.logger.info(u"{0!r} acknowledged our subscrption cancelation"
-                                                    .format(stanza.from_jid))
-        return True
-
-    @message_stanza_handler()
-    def handle_message(self, stanza):
+    def start(self, event):
         """
-          Handle the request messages
+         Process the session_start event.
+
+         Typical actions for the session_start event are
+         requesting the roster and broadcasting an initial
+         presence stanza.
+
+         :param event: An empty dictionary. The session_start
+                       event does not provide any additional
+                       data
         """
-        if stanza.subject:
-            subject = u"Re: " + stanza.subject
-        else:
-            subject = None
+        self.send_presence()
+        self.get_roster()
 
-        if stanza.body:
-            msg = Message(stanza_type = stanza.stanza_type,
-                          from_jid = stanza.to_jid, to_jid = stanza.from_jid,
-                          subject = subject,thread = stanza.thread)  
-            body = stanza.body.lower().strip()
-            if body == 'hello' or body == 'hi':
-                msg.body = welcome_output.decode('utf-8')
-            elif not body.startswith('#'):
-                meanings = self.parser.get_meaning(body)
-                reply = self._prepare_reply(meanings)
-                if reply:
-                    msg.body,xml_payload = reply
-                    tree = ET.fromstring(xml_payload)
-                    msg.add_payload(tree)                                
-                else:
-                    msg.body = u"ಕ್ಷಮಿಸಿ ಈ ಶಬ್ದದ ಅರ್ಥವು ನನಗೆ ತಿಳಿದಿಲ್ಲ!\n"
-                    
-            return msg
 
-    def _prepare_reply(self, meanings):
-        reply = ''
-        xml = xhtml_im_header
-        i = 0
-        for wtype in meanings.get('wtypes'):
-            reply += '\n' + wtype + ': \n'
-            xml += '<br/><strong>' + wtype +': </strong><br/>'
-            
-            defs = meanings.get('definitions')
-            
-            reply += ','.join(defs[i])
-            xml += '<p>' + ','.join(defs[i]) + '</p><br/>'
-            i += 1
+    def message(self, msg):
+        """
+         Process the message stanza from client basically this
+         will be request from the user containing single word
+         but some time might be error message so before proceeding
+         with processing of the message it is better to check type
+         of message.
 
-        xml += xhtml_im_footer
-        self.logger.debug(reply)
-        
-        return (reply,xml.encode('utf-8')) if len(reply) > 0 else None
+         If message is valid chat type pass it on to the bridge
+         code to do further processing and wait for result.
 
-    @event_handler(DisconnectedEvent)
-    def handle_disconnected(self, event):
-        """Quit the main loop upon disconnection."""
-        return QUIT
-    
-    @event_handler()
-    def handle_all(self, event):
-        """Log all events."""
-        self.logger.info(u"-- {0}".format(event))
+         :param msg: Message object representing the message from
+                     client.
+        """
 
-        
-def prepare_logger(debug=0):
-    handler = TimedRotatingFileHandler('dictbot.log', when='D', interval=7)
-    logger = logging.getLogger('dictbot')
-    
-    if debug == 1:
-        handler.setLevel(logging.DEBUG)
-        logger.setLevel(logging.DEBUG)
-    else:
-        handler.setLevel(logging.ERROR)
-        logger.setLevel(logging.ERROR)
-        
-    logger.addHandler(handler)
+        if msg['type'] in ('chat', 'normal'):
+            #TODO: pass this to the bridge for further processing
+            pass
 
-    return logger
 
-    
 def main():
-    conffile = 'dictbot.conf' if os.path.exists(os.path.join(os.path.dirname(__file__),
-                                                             "dictbot.conf")) else "/etc/dictbot.conf"
-    config = yaml.load(open(conffile).read())
-    network_section = config.get('network')
-    wiktionary_section = config.get('wiktionary')
-    authorization_section = config.get('authorization')
-    
-    jid = authorization_section.get('jabber_id')
-    password = authorization_section.get('password')
-    
-    server = network_section.get('server')
-    prefer_ipv6 = network_section.get('prefer_ipv6')
-    starttls = True if network_section.get('starttls') == 1 else False
+    """
+     Main driver for the bot. First check for the configuration file
+     and load values from it. Then check if the same value is passed
+     as arguments then override the value from the configuration file
 
-    language = wiktionary_section.get('language')
-    api_url = wiktionary_section.get('wiktionary_url')
-    url = 'http://' + language + '.' + api_url
-    
-    debug = True if config.get('debug') == 1 else False
+     Once values are obtained then start the bot
+    """
 
+    custompathstem = os.path.join(os.environ['DICTBOT_CONFIGDIR'],
+                                  'dictbot.conf') if os.environ.has_key('DICTBOT_CONFIGDIR') else None
+    config_file = custompathstem if os.path.exists(custompathstem) else '/etc/dictbot/dictbot.conf'
+    configdict = yaml.load(file(config_file).read())
 
-    if debug:
-        logger = prepare_logger(1)
+    parser = ArgumentParser(description='A Jabber Dictionary Bot')
+    parser.add_argument('-j', '--jid', help='Jabber ID for the bot to connect.', required=False)
+    parser.add_argument('-p', '--password', help='Password for Jabber account', required=False)
+    parser.add_argument('-d', '--debug', help='Enable Debug messages', default=False, required=False)
+
+    args = parser.parse_args()
+
+    jid = configdict.get('jabber').get('jid') if configdict.has_key('jabber') and\
+        configdict.get('jabber').has_key('jid') else args.jid
+    password = configdict.get('jabber').get('password') if configdict.has_key('jabber')\
+        and configdict.get('jabber').has_key('password') else args.Password
+
+    if not jid or not password:
+        print "Please provide JID and Password either through config or command line options"
+        sys.exit(2)
+
+    debug = configdict.get('debug') if configdict.has_key('debug') else args.debug
+
+    xmpp = DictBot(jid, password)
+    xmpp.register_plugin('xep_0030') # Service Discovery
+    xmpp.register_plugin('xep_0004') # Data Forms
+    xmpp.register_plugin('xep_0060') # PubSub
+    xmpp.register_plugin('xep_0199') # XMPP Ping
+
+    if xmpp.connect():
+        xmpp.process(block=True)
     else:
-        logger = prepare_logger(0)
-        
-    settings = XMPPSettings({
-            'password': password,
-            'prefer_ipv6':prefer_ipv6,
-            'server': server,
-            'starttls': starttls
-            })
+        print "Unable to connect"
     
-    bot = DictBot(JID(jid), settings, logger, url, language)
-    try:
-        bot.run()
-    except KeyboardInterrupt:
-        bot.disconnect()
-
-if __name__ == '__main__':
-    main()
