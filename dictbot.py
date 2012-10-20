@@ -102,6 +102,7 @@ def main():
     xmpp.register_plugin('xep_0004') # Data Forms
     xmpp.register_plugin('xep_0060') # PubSub
     xmpp.register_plugin('xep_0199') # XMPP Ping
+    xmpp.register_plugin('xep_0071') # XHTML IM
 
     if xmpp.connect():
         xmpp.process(block=True)
