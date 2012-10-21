@@ -1,7 +1,10 @@
 #!/usr/bin/python
 #-*- coding: utf-8 -*-
 
-import sys, os, sleekxmpp, yaml
+import sys
+import os
+import sleekxmpp
+import yaml
 from argparse import ArgumentParser
 
 # Python versions before 3.0 do not use UTF-8 encoding
@@ -14,6 +17,7 @@ if sys.version_info < (3, 0):
 else:
     raw_input = input
 
+
 class DictBot(sleekxmpp.ClientXMPP):
     """
       A dictionary bot which recieves words as input from any language
@@ -24,10 +28,8 @@ class DictBot(sleekxmpp.ClientXMPP):
       to input the meanings types etc.
     """
     def __init__(self, jid, password):
-        
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
         self.add_event_handler("session_start", self.start)
-
 
     def start(self, event):
         """
@@ -43,7 +45,6 @@ class DictBot(sleekxmpp.ClientXMPP):
         """
         self.send_presence()
         self.get_roster()
-
 
     def message(self, msg):
         """
@@ -75,37 +76,54 @@ def main():
     """
 
     custompathstem = os.path.join(os.environ['DICTBOT_CONFIGDIR'],
-                                  'dictbot.conf') if os.environ.has_key('DICTBOT_CONFIGDIR') else None
-    config_file = custompathstem if os.path.exists(custompathstem) else '/etc/dictbot/dictbot.conf'
+                                  'dictbot.conf') \
+                                  if 'DICBOT_CONFIGDIR' in os.environ \
+                                  else None
+    print custompathstem
+    config_file = custompathstem if os.path.exists(custompathstem)\
+        else '/etc/dictbot/dictbot.conf'
     configdict = yaml.load(file(config_file).read())
 
     parser = ArgumentParser(description='A Jabber Dictionary Bot')
-    parser.add_argument('-j', '--jid', help='Jabber ID for the bot to connect.', required=False)
-    parser.add_argument('-p', '--password', help='Password for Jabber account', required=False)
-    parser.add_argument('-d', '--debug', help='Enable Debug messages', default=False, required=False)
+    parser.add_argument(
+                        '-j', '--jid',
+                        help='Jabber ID for the bot to connect.',
+                        required=False)
+    parser.add_argument(
+                        '-p', '--password',
+                        help='Password for Jabber account',
+                        required=False)
+    parser.add_argument(
+                        '-d', '--debug',
+                        help='Enable Debug messages',
+                        default=False, required=False)
 
     args = parser.parse_args()
 
-    jid = configdict.get('jabber').get('jid') if configdict.has_key('jabber') and\
-        configdict.get('jabber').has_key('jid') else args.jid
-    password = configdict.get('jabber').get('password') if configdict.has_key('jabber')\
-        and configdict.get('jabber').has_key('password') else args.Password
+    jid = configdict.get('jabber').get('jid')\
+        if 'jabber' in configdict and\
+        'jid' in configdict.get('jabber') else args.jid
+    password = configdict.get('jabber').get('password')\
+        if 'jabber' in configdict\
+        and 'password' in configdict.get('jabber') else args.password
 
     if not jid or not password:
-        print "Please provide JID and Password either through config or command line options"
+        print """Please provide JID and Password either through config or
+ command line options"""
         sys.exit(2)
 
-    debug = configdict.get('debug') if configdict.has_key('debug') else args.debug
+    debug = configdict.get('debug') if 'debug' in configdict else args.debug
 
     xmpp = DictBot(jid, password)
-    xmpp.register_plugin('xep_0030') # Service Discovery
-    xmpp.register_plugin('xep_0004') # Data Forms
-    xmpp.register_plugin('xep_0060') # PubSub
-    xmpp.register_plugin('xep_0199') # XMPP Ping
-    xmpp.register_plugin('xep_0071') # XHTML IM
+    xmpp.register_plugin('xep_0030')  # Service Discovery
+    xmpp.register_plugin('xep_0004')  # Data Forms
+    xmpp.register_plugin('xep_0060')  # PubSub
+    xmpp.register_plugin('xep_0199')  # XMPP Ping
 
     if xmpp.connect():
         xmpp.process(block=True)
     else:
         print "Unable to connect"
-    
+
+if __name__ == "__main__":
+    main()
