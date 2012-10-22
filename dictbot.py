@@ -5,7 +5,11 @@ import sys
 import os
 import sleekxmpp
 import yaml
+import logging
+
 from argparse import ArgumentParser
+from bridge import ParserBridge
+from loghandler import LogHandler
 
 # Python versions before 3.0 do not use UTF-8 encoding
 # by default. To ensure that Unicode is handled properly
@@ -27,9 +31,20 @@ class DictBot(sleekxmpp.ClientXMPP):
       If meaning is not found it responds with a data form asking user
       to input the meanings types etc.
     """
-    def __init__(self, jid, password):
+    def __init__(self, jid, password, logger, lang='kn_IN'):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
+        
+        self.register_plugin('xep_0030')  # Service Discovery
+        self.register_plugin('xep_0004')  # Data Forms
+        self.register_plugin('xep_0060')  # PubSub
+        self.register_plugin('xep_0199')  # XMPP Ping
+
         self.add_event_handler("session_start", self.start)
+        self.add_event_handler("message", self.message)
+
+        self.auto_authorize = True
+        self.logger = logger
+        self.lang = lang
 
     def start(self, event):
         """
@@ -63,7 +78,11 @@ class DictBot(sleekxmpp.ClientXMPP):
 
         if msg['type'] in ('chat', 'normal'):
             #TODO: pass this to the bridge for further processing
-            pass
+            reply = ParserBridge(msg, self.lang, self.logger).process()
+            if reply:
+                reply.send()
+            else:
+                pass
 
 
 def main():
@@ -77,11 +96,19 @@ def main():
 
     custompathstem = os.path.join(os.environ['DICTBOT_CONFIGDIR'],
                                   'dictbot.conf') \
-                                  if 'DICBOT_CONFIGDIR' in os.environ \
+                                  if 'DICTBOT_CONFIGDIR' in os.environ \
                                   else None
-    print custompathstem
-    config_file = custompathstem if os.path.exists(custompathstem)\
+    
+    log_file = os.path.join(os.environ['DICTBOT_LOGDIR'],
+                                 'dictbot.log')\
+                                 if 'DICTBOT_LOGDIR' in os.environ \
+                                 else '/var/log/dictbot.log'
+
+    config_file = custompathstem if custompathstem and os.path.exists(
+        custompathstem)\
         else '/etc/dictbot/dictbot.conf'
+
+    
     configdict = yaml.load(file(config_file).read())
 
     parser = ArgumentParser(description='A Jabber Dictionary Bot')
@@ -93,10 +120,10 @@ def main():
                         '-p', '--password',
                         help='Password for Jabber account',
                         required=False)
-    parser.add_argument(
-                        '-d', '--debug',
-                        help='Enable Debug messages',
-                        default=False, required=False)
+
+    parser.add_argument('-d', '--debug', help='set logging to DEBUG',
+                    action='store_const', dest='loglevel',
+                    const=logging.DEBUG, default=logging.INFO)
 
     args = parser.parse_args()
 
@@ -112,13 +139,13 @@ def main():
  command line options"""
         sys.exit(2)
 
-    debug = configdict.get('debug') if 'debug' in configdict else args.debug
+    debug = logging.DEBUG if 'debug' in configdict and\
+        configdict.get('debug') == 1 else args.debug
+    logger = LogHandler(debug, log_file)
+    logging.basicConfig(level=debug,
+                       format='%(levelname)-8s %(message)s')    
 
-    xmpp = DictBot(jid, password)
-    xmpp.register_plugin('xep_0030')  # Service Discovery
-    xmpp.register_plugin('xep_0004')  # Data Forms
-    xmpp.register_plugin('xep_0060')  # PubSub
-    xmpp.register_plugin('xep_0199')  # XMPP Ping
+    xmpp = DictBot(jid, password, logger)
 
     if xmpp.connect():
         xmpp.process(block=True)
