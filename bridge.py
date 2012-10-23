@@ -22,7 +22,9 @@ class ParserBridge:
         self.body = msg['body'].strip()
         self.from_id = msg['from']
         self.to_id = msg['to']
-        self.subject = 'Re: ' + msg['subject'] if len(msg['subject']) > 0 else None
+        self.subject = msg['subject']
+        self.id = msg['id']
+        self.type = msg['type']
         self.langguesser = getInstance()
         self.logger = logger
         self.lang = lang
@@ -37,7 +39,7 @@ class ParserBridge:
         url = 'http://' + langid.split('_')[0] + '.' + __wiktionary_url__ + word
         data = connect(url)
         if data and type(data).__name__ == 'str':
-            return parser.get_meaning(word)
+            return parser.get_meaning(data)
         else:
             self.logger.errorlogger.exception('Something went wrong: {0} and {1}'.format(data.message, url))
             
@@ -46,19 +48,11 @@ class ParserBridge:
         if len(self.body.split()) > 1:
             print 'inside muliword'
             # We have more than one please send back an error
-            message = Message()
-            message['body'] = "Sorry please send me one word at a time!"
+            return "Sorry please send me one word at a time!"
         else:
             langid = self.langguesser.guessLanguageId(self.body)
             if langid in self.parserdict:
                 message = self._process_word(langid, self.body)
             elif langid == 'en_US':
                 message = self._process_word(self.lang, self.body)
-
-        if message:
-            message['to'] = self.from_id
-            message['from'] = self.to_id
-            message['subject'] = self.subject
-
-        return message
-                    
+        return message 

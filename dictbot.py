@@ -77,12 +77,22 @@ class DictBot(sleekxmpp.ClientXMPP):
         """
 
         if msg['type'] in ('chat', 'normal'):
-            #TODO: pass this to the bridge for further processing
-            reply = ParserBridge(msg, self.lang, self.logger).process()
-            if reply:
-                reply.send()
-            else:
+            if msg['body'].strip().lower() == 'hello':
                 pass
+            else:
+            #TODO: pass this to the bridge for further processing
+                reply = ParserBridge(msg, self.lang, self.logger).process()
+                if reply and type(reply).__name__ == 'tuple':
+                    self.make_message(msg['from'], reply[0],
+                                      'Re: ' + msg['subject'],
+                                      msg['type'], reply[1],
+                                      self.jid, 'dictbot').send()
+                elif reply and type(reply).__name__ == 'str':
+                    self.make_message(msg['from'], reply).send()
+                else:
+                    # if reply not found then send form to collect
+                    # the data
+                    pass
 
 
 def main():

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import sleekxmpp
 from BeautifulSoup import BeautifulSoup
 from wiktionaryparser import WiktionaryParser
 from xml.etree import cElementTree as ET
@@ -20,7 +19,6 @@ class KNWiktionaryParser(WiktionaryParser):
 
     def _prepare_message(self, meanings):
         self.logger.infologger.debug(meanings)
-        msg = sleekxmpp.Message()
         reply_body = ''
         reply_xml = self.xhtml_im_header
         i = 0
@@ -34,11 +32,10 @@ class KNWiktionaryParser(WiktionaryParser):
 
             i += 1
         reply_xml += self.xhtml_im_footer
-        self.logger.infologger.info(reply_body)
+        ctree = ET.fromstring(reply_xml)
+        self.logger.infologger.debug(reply_body)
         if len(reply_body) > 0:
-            msg['body'] = reply_body
-            msg['html']['body'] = ET.fromstring(reply_xml)
-            return msg
+            return (reply_body, ctree)
 
     def get_meaning(self, data):
         meanings = {}
@@ -47,7 +44,8 @@ class KNWiktionaryParser(WiktionaryParser):
         
         try:
             # Remove () from the output
-            content = json.loads(data.lstrip('(').rstrip(')'))
+            tmp = data.lstrip('(').rstrip(')')
+            content = json.loads(tmp)
 
             html_content = content.get('parse').get('text').get('*')
             soup = BeautifulSoup(html_content)
