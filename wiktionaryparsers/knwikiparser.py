@@ -18,24 +18,24 @@ class KNWiktionaryParser(WiktionaryParser):
         self.logger = logger
 
     def _prepare_message(self, meanings):
-        self.logger.infologger.debug(meanings)
-        reply_body = ''
-        reply_xml = self.xhtml_im_header
-        i = 0
-        for wtype in meanings.get('wtypes'):
-            reply_body += '\n' + wtype + ': \n'
-            reply_xml += '<br/><strong>' + wtype + ': </strong><br/>'
+        if len(meanings) > 0:
+            reply_body = ''
+            reply_xml = self.xhtml_im_header
+            i = 0
+            for wtype in meanings.get('wtypes'):
+                reply_body += '\n' + wtype + ': \n'
+                reply_xml += '<br/><strong>' + wtype + ': </strong><br/>'
+                
+                defs = ','.join(meanings.get('definitions')[i])
+                reply_body += defs
+                reply_xml += '<p>' + defs + '</p>'
 
-            defs = ','.join(meanings.get('definitions')[i])
-            reply_body += defs
-            reply_xml += '<p>' + defs + '</p>'
-
-            i += 1
-        reply_xml += self.xhtml_im_footer
-        ctree = ET.fromstring(reply_xml)
-        self.logger.infologger.debug(reply_body)
-        if len(reply_body) > 0:
-            return (reply_body, ctree)
+                i += 1
+                
+            reply_xml += self.xhtml_im_footer
+            ctree = ET.fromstring(reply_xml)
+            if len(reply_body) > 0:
+                return (reply_body, ctree)
 
     def get_meaning(self, data):
         meanings = {}
@@ -71,9 +71,3 @@ class KNWiktionaryParser(WiktionaryParser):
             self.logger.errorlogger.exception('Something went wrong: {0}'.format(e.message))
 
         return self._prepare_message(meanings)
-        
-        
-
-
-
-        
