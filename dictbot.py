@@ -10,6 +10,7 @@ import logging
 from argparse import ArgumentParser
 from bridge import ParserBridge
 from loghandler import LogHandler
+from constants import *
 
 # Python versions before 3.0 do not use UTF-8 encoding
 # by default. To ensure that Unicode is handled properly
@@ -78,7 +79,7 @@ class DictBot(sleekxmpp.ClientXMPP):
 
         if msg['type'] in ('chat', 'normal'):
             if msg['body'].strip().lower() == 'hello':
-                pass
+                self.make_message(msg['from'], welcome_output).send()
             else:
             #TODO: pass this to the bridge for further processing
                 reply = ParserBridge(msg, self.lang, self.logger).process()
