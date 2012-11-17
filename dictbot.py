@@ -78,7 +78,7 @@ class DictBot(sleekxmpp.ClientXMPP):
         """
 
         if msg['type'] in ('chat', 'normal'):
-            if msg['body'].strip().lower() == 'hello':
+            if msg['body'].strip().lower() == 'hi':
                 self.make_message(msg['from'], welcome_output).send()
             else:
             #TODO: pass this to the bridge for further processing
