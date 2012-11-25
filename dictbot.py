@@ -82,7 +82,7 @@ class DictBot(sleekxmpp.ClientXMPP):
                 self.make_message(msg['from'], welcome_output).send()
             else:
             #TODO: pass this to the bridge for further processing
-                self.logger.infologger("Got request: {0}".format(msg['body'].strip()))
+                self.logger.infologger.info("Got request: {0}".format(msg['body'].strip()))
                 reply = ParserBridge(msg, self.lang, self.logger).process()
                 if reply and type(reply).__name__ == 'tuple':
                     self.make_message(msg['from'], reply[0],
