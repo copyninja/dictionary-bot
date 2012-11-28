@@ -81,7 +81,6 @@ class DictBot(sleekxmpp.ClientXMPP):
             if msg['body'].strip().lower() == 'hi':
                 self.make_message(msg['from'], welcome_output).send()
             else:
-            #TODO: pass this to the bridge for further processing
                 self.logger.infologger.info("Got request: {0}".format(msg['body'].strip()))
                 reply = ParserBridge(msg, self.lang, self.logger).process()
                 if reply and type(reply).__name__ == 'tuple':
@@ -93,9 +92,8 @@ class DictBot(sleekxmpp.ClientXMPP):
                     # multiple words received so send string output
                     self.make_message(msg['from'], reply).send()
                 else:
-                    # if reply not found then send form to collect
-                    # the data
-                    pass
+                    #TODO: temporary need to handle meaning adding
+                    self.make_message(msg['from'], not_found_output).send()
 
 
 def main():
