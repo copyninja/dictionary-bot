@@ -93,7 +93,7 @@ class DictBot(sleekxmpp.ClientXMPP):
                     self.make_message(msg['from'], reply).send()
                 else:
                     #TODO: temporary need to handle meaning adding
-                    self.logger.infologger.info('Meaning not found: {0}'.format(msg['body'].strip()))
+                    self.logger.errorlogger.error('Meaning not found: {0}'.format(msg['body'].strip()))
                     self.make_message(msg['from'], not_found_output).send()
 
 
