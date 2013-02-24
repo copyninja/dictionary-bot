@@ -1,1 +1,3 @@
 dictbot.conf
+*.pyc
+*.log
