@@ -8,6 +8,7 @@ import yaml
 import logging
 
 from argparse import ArgumentParser
+from multiprocessing import Process
 from bridge import ParserBridge
 from loghandler import LogHandler
 from constants import *
@@ -96,7 +97,15 @@ class DictBot(sleekxmpp.ClientXMPP):
                     self.logger.errorlogger.error('Meaning not found: {0}'.format(msg['body'].strip()))
                     self.make_message(msg['from'], not_found_output).send()
 
-
+                    
+def spawn_newbot(jid, password, logger):
+    xmpp = DictBot(jid, password, logger)
+    if xmpp.connect():
+        xmpp.process(block=True)
+    else:
+        print "Unable to Connect."
+    
+    
 def main():
     """
      Main driver for the bot. First check for the configuration file
@@ -132,37 +141,44 @@ def main():
                         '-p', '--password',
                         help='Password for Jabber account',
                         required=False)
-
     parser.add_argument('-d', '--debug', help='set logging to DEBUG',
                     action='store_const', dest='loglevel',
-                    const=logging.DEBUG, default=logging.INFO)
+                    const=logging.DEBUG, default=logging.DEBUG)
 
     args = parser.parse_args()
-
-    jid = configdict.get('jabber').get('jid')\
-        if 'jabber' in configdict and\
-        'jid' in configdict.get('jabber') else args.jid
-    password = configdict.get('jabber').get('password')\
-        if 'jabber' in configdict\
-        and 'password' in configdict.get('jabber') else args.password
-
-    if not jid or not password:
-        print """Please provide JID and Password either through config or
- command line options"""
-        sys.exit(2)
-
     debug = logging.DEBUG if 'debug' in configdict and\
-        configdict.get('debug') == 1 else args.debug
+        configdict.get('debug') == 1 else logging.ERROR
+    
     logger = LogHandler(debug, log_file)
     logging.basicConfig(level=debug,
-                       format='%(levelname)-8s %(message)s')    
+                        format='%(levelname)-8s %(message)s')
+    if len(configdict.get('jabber')) == 1:
+        acdetails = configdict.get('jabber')[0]
+        jid = acdetails.get('jid')\
+            if 'jid' in acdetails else args.jid
+        password = acdetails.get('password')\
+            if 'password' in acdetails else args.password
 
-    xmpp = DictBot(jid, password, logger)
+        if not jid or not password:
+            print """Please provide JID and Password either through config or
+ command line options"""
+            sys.exit(2)
 
-    if xmpp.connect():
-        xmpp.process(block=True)
+        xmpp = DictBot(jid, password, logger)
+
+        if xmpp.connect():
+            xmpp.process(block=True)
+        else:
+            print "Unable to connect"
     else:
-        print "Unable to connect"
+        accounts = configdict.get('jabber')
+        for acnt in accounts:
+            jid = acnt.get('jid')
+            password = acnt.get('password')
+            p = Process(target=spawn_newbot, args=(jid, password, logger))
+            p.start()
+            p.join(15)
+
 
 if __name__ == "__main__":
     main()
