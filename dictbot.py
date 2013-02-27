@@ -33,7 +33,7 @@ class DictBot(sleekxmpp.ClientXMPP):
       If meaning is not found it responds with a data form asking user
       to input the meanings types etc.
     """
-    def __init__(self, jid, password, logger, lang='kn_IN'):
+    def __init__(self, jid, password, logger, lang='kn'):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
         
         self.register_plugin('xep_0030')  # Service Discovery
@@ -98,8 +98,8 @@ class DictBot(sleekxmpp.ClientXMPP):
                     self.make_message(msg['from'], not_found_output).send()
 
                     
-def spawn_newbot(jid, password, logger):
-    xmpp = DictBot(jid, password, logger)
+def spawn_newbot(jid, password, logger, lang):
+    xmpp = DictBot(jid, password, logger, lang)
     if xmpp.connect():
         xmpp.process(block=True)
     else:
@@ -141,6 +141,10 @@ def main():
                         '-p', '--password',
                         help='Password for Jabber account',
                         required=False)
+    parser.add_argument(
+                        '-l', '--language',
+                        help='Language for Jabber bot',
+                        required=False)
     parser.add_argument('-d', '--debug', help='set logging to DEBUG',
                     action='store_const', dest='loglevel',
                     const=logging.DEBUG, default=logging.DEBUG)
@@ -158,8 +162,10 @@ def main():
             if 'jid' in acdetails else args.jid
         password = acdetails.get('password')\
             if 'password' in acdetails else args.password
+        lang = acdetails.get('lang')\
+            if 'lang' in acdetails else args.language
 
-        if not jid or not password:
+        if not jid or not password or not lang:
             print """Please provide JID and Password either through config or
  command line options"""
             sys.exit(2)
@@ -175,7 +181,11 @@ def main():
         for acnt in accounts:
             jid = acnt.get('jid')
             password = acnt.get('password')
-            p = Process(target=spawn_newbot, args=(jid, password, logger))
+            lang = acnt.get('lang')
+            print jid
+            print password
+            print lang
+            p = Process(target=spawn_newbot, args=(jid, password, logger, lang))
             p.start()
             p.join(15)
 
