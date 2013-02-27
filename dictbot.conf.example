@@ -1,7 +1,6 @@
 #-*- mode: yaml -*-
 ---
 debug: 1
-default_lang: kn
 jabber:
- - {jid: jid1@domain.org, password: secret1}
- - {jid: jid2@domain.org, password: secret2}
+ - {jid: jid1@domain.org, password: secret1, lang: langid1}
+ - {jid: jid2@domain.org, password: secret2, lang: langid2}
