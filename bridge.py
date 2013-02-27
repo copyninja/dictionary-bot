@@ -30,7 +30,7 @@ class ParserBridge:
         self.lang = lang
         
         self.parserdict = {
-             'kn_IN':KNWiktionaryParser(self.logger),
+             'kn':KNWiktionaryParser(self.logger),
             }
         
 
