@@ -129,9 +129,6 @@ def main():
         custompathstem)\
         else '/etc/dictbot/dictbot.conf'
 
-    
-    configdict = yaml.load(file(config_file).read())
-
     parser = ArgumentParser(description='A Jabber Dictionary Bot')
     parser.add_argument(
                         '-j', '--jid',
@@ -150,44 +147,34 @@ def main():
                     const=logging.DEBUG, default=logging.DEBUG)
 
     args = parser.parse_args()
+    
+    configdict = yaml.load(file(config_file).read())
+
     debug = logging.DEBUG if 'debug' in configdict and\
         configdict.get('debug') == 1 else logging.ERROR
     
+    jabber_records = configdict.get('jabber')
+
     logger = LogHandler(debug, log_file)
     logging.basicConfig(level=debug,
                         format='%(levelname)-8s %(message)s')
-    if len(configdict.get('jabber')) == 1:
-        acdetails = configdict.get('jabber')[0]
-        jid = acdetails.get('jid')\
-            if 'jid' in acdetails else args.jid
-        password = acdetails.get('password')\
-            if 'password' in acdetails else args.password
-        lang = acdetails.get('lang')\
-            if 'lang' in acdetails else args.language
 
-        if not jid or not password or not lang:
-            print """Please provide JID and Password either through config or
- command line options"""
-            sys.exit(2)
-
-        xmpp = DictBot(jid, password, logger)
-
-        if xmpp.connect():
-            xmpp.process(block=True)
-        else:
-            print "Unable to connect"
+    if len(jabber_records) == 0:
+        spawn_newbot(args.jid, args.password, logger, args.language)
     else:
-        accounts = configdict.get('jabber')
-        for acnt in accounts:
-            jid = acnt.get('jid')
-            password = acnt.get('password')
-            lang = acnt.get('lang')
-            print jid
-            print password
-            print lang
-            p = Process(target=spawn_newbot, args=(jid, password, logger, lang))
-            p.start()
-            p.join(15)
+        if len(jabber_records) == 1:
+            spawn_newbot(jabber_records.get('jid'),
+                         jabber_records.get('password'), logger,
+                         jabber_records.get('lang'))
+        else:
+            for acdetails in jabber_records:
+                print acdetails
+                p = Process(target=spawn_newbot,
+                            args=(acdetails.get('jid'),
+                                  acdetails.get('password'), logger,
+                                  acdetails.get('lang')))
+                p.start()
+                p.join(15)
 
 
 if __name__ == "__main__":
