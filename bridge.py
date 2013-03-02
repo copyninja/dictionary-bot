@@ -46,7 +46,6 @@ class ParserBridge:
     def process(self):
         message = None
         if len(self.body.split()) > 1:
-            print 'inside muliword'
             # We have more than one please send back an error
             return "Sorry please send me one word at a time!"
         else:
