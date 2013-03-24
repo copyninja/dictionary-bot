@@ -99,6 +99,15 @@ class DictBot(sleekxmpp.ClientXMPP):
 
                     
 def spawn_newbot(jid, password, logger, lang):
+    """
+     This function is responsible for creating DictBot instance and
+     connecting to it. This abstraction is created to ease the use of
+     Multi-Process module.
+
+     :param jid: JID for the bot
+     :param password: Password for the account recognized by JID
+     :param lang: Default language for the bot (use for multi-lingual logic)
+    """
     xmpp = DictBot(jid, password, logger, lang)
     if xmpp.connect():
         xmpp.process(block=True)
@@ -112,7 +121,8 @@ def main():
      and load values from it. Then check if the same value is passed
      as arguments then override the value from the configuration file
 
-     Once values are obtained then start the bot
+     If multiple account configuration is specified in the config file
+     then use multiprocess module to spawn bots.
     """
 
     custompathstem = os.path.join(os.environ['DICTBOT_CONFIGDIR'],
