@@ -2,7 +2,7 @@
 
 from BeautifulSoup import BeautifulSoup
 from wiktionaryparser import WiktionaryParser
-from xml.etree import cElementTree as ET
+
 
 try:
     import simplejson as json
@@ -18,28 +18,8 @@ class KNWiktionaryParser(WiktionaryParser):
         WiktionaryParser.__init__(self, logger)
         self.logger = logger
 
-    def _prepare_message(self, meanings):
-        if len(meanings) > 0:
-            reply_body = ''
-            reply_xml = self.xhtml_im_header
-            i = 0
-            for wtype in meanings.get('wtypes'):
-                reply_body += '\n' + wtype + ': \n'
-                reply_xml += '<br/><strong>' + wtype + ': </strong><br/>'
-
-                defs = ','.join(meanings.get('definitions')[i])
-                reply_body += defs
-                reply_xml += '<p>' + defs + '</p>'
-
-                i += 1
-
-            reply_xml += self.xhtml_im_footer
-            ctree = ET.fromstring(reply_xml)
-            if len(reply_body) > 0:
-                return (reply_body, ctree)
-
     def get_meaning(self, data):
-        meanings = {}
+        self.meanings = {}
         wtypes = []
         meanings_list = []
 
@@ -66,10 +46,8 @@ class KNWiktionaryParser(WiktionaryParser):
                         def_list.append(a.string)
                 meanings_list.append(def_list)
 
-            meanings['wtypes'] = wtypes
-            meanings['definitions'] = meanings_list
+            self.meanings['wtypes'] = wtypes
+            self.meanings['definitions'] = meanings_list
         except Exception as e:
             self.logger.errorlogger.exception
             ('Something went wrong: {0}'.format(e.message))
-
-        return self._prepare_message(meanings)
