@@ -35,7 +35,7 @@ class DictBot(sleekxmpp.ClientXMPP):
     """
     def __init__(self, jid, password, logger, lang='kn'):
         sleekxmpp.ClientXMPP.__init__(self, jid, password)
-        
+
         self.register_plugin('xep_0030')  # Service Discovery
         self.register_plugin('xep_0004')  # Data Forms
         self.register_plugin('xep_0060')  # PubSub
@@ -82,7 +82,8 @@ class DictBot(sleekxmpp.ClientXMPP):
             if msg['body'].strip().lower() == 'hi':
                 self.make_message(msg['from'], welcome_output).send()
             else:
-                self.logger.infologger.info("Got request: {0}".format(msg['body'].strip()))
+                self.logger.infologger.info("Got request: {0}".format
+                                            (msg['body'].strip()))
                 reply = ParserBridge(msg, self.lang, self.logger).process()
                 if reply and type(reply).__name__ == 'tuple':
                     self.make_message(msg['from'], reply[0],
@@ -94,10 +95,11 @@ class DictBot(sleekxmpp.ClientXMPP):
                     self.make_message(msg['from'], reply).send()
                 else:
                     #TODO: temporary need to handle meaning adding
-                    self.logger.errorlogger.error('Meaning not found: {0}'.format(msg['body'].strip()))
+                    self.logger.errorlogger.error(
+                        'Meaning not found: {0}'.format(msg['body'].strip()))
                     self.make_message(msg['from'], not_found_output).send()
 
-                    
+
 def spawn_newbot(jid, password, logger, lang):
     """
      This function is responsible for creating DictBot instance and
@@ -113,8 +115,8 @@ def spawn_newbot(jid, password, logger, lang):
         xmpp.process(block=True)
     else:
         print "Unable to Connect."
-    
-    
+
+
 def main():
     """
      Main driver for the bot. First check for the configuration file
@@ -127,13 +129,13 @@ def main():
 
     custompathstem = os.path.join(os.environ['DICTBOT_CONFIGDIR'],
                                   'dictbot.conf') \
-                                  if 'DICTBOT_CONFIGDIR' in os.environ \
-                                  else None
-    
+        if 'DICTBOT_CONFIGDIR' in os.environ \
+           else None
+
     log_file = os.path.join(os.environ['DICTBOT_LOGDIR'],
-                                 'dictbot.log')\
-                                 if 'DICTBOT_LOGDIR' in os.environ \
-                                 else '/var/log/dictbot.log'
+                            'dictbot.log')\
+        if 'DICTBOT_LOGDIR' in os.environ \
+           else '/var/log/dictbot.log'
 
     config_file = custompathstem if custompathstem and os.path.exists(
         custompathstem)\
@@ -141,28 +143,28 @@ def main():
 
     parser = ArgumentParser(description='A Jabber Dictionary Bot')
     parser.add_argument(
-                        '-j', '--jid',
-                        help='Jabber ID for the bot to connect.',
-                        required=False)
+        '-j', '--jid',
+        help='Jabber ID for the bot to connect.',
+        required=False)
     parser.add_argument(
-                        '-p', '--password',
-                        help='Password for Jabber account',
-                        required=False)
+        '-p', '--password',
+        help='Password for Jabber account',
+        required=False)
     parser.add_argument(
-                        '-l', '--language',
-                        help='Language for Jabber bot',
-                        required=False)
+        '-l', '--language',
+        help='Language for Jabber bot',
+        required=False)
     parser.add_argument('-d', '--debug', help='set logging to DEBUG',
-                    action='store_const', dest='loglevel',
-                    const=logging.DEBUG, default=logging.DEBUG)
+                        action='store_const', dest='loglevel',
+                        const=logging.DEBUG, default=logging.DEBUG)
 
     args = parser.parse_args()
-    
+
     configdict = yaml.load(file(config_file).read())
 
     debug = logging.DEBUG if 'debug' in configdict and\
         configdict.get('debug') == 1 else logging.ERROR
-    
+
     jabber_records = configdict.get('jabber')
 
     logger = LogHandler(debug, log_file)

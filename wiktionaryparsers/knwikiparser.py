@@ -9,6 +9,7 @@ try:
 except:
     import json
 
+
 class KNWiktionaryParser(WiktionaryParser):
     '''
       Parser for Kannada wiktionary
@@ -25,13 +26,13 @@ class KNWiktionaryParser(WiktionaryParser):
             for wtype in meanings.get('wtypes'):
                 reply_body += '\n' + wtype + ': \n'
                 reply_xml += '<br/><strong>' + wtype + ': </strong><br/>'
-                
+
                 defs = ','.join(meanings.get('definitions')[i])
                 reply_body += defs
                 reply_xml += '<p>' + defs + '</p>'
 
                 i += 1
-                
+
             reply_xml += self.xhtml_im_footer
             ctree = ET.fromstring(reply_xml)
             if len(reply_body) > 0:
@@ -41,7 +42,7 @@ class KNWiktionaryParser(WiktionaryParser):
         meanings = {}
         wtypes = []
         meanings_list = []
-        
+
         try:
             # Remove () from the output
             tmp = data.lstrip('(').rstrip(')')
@@ -52,11 +53,11 @@ class KNWiktionaryParser(WiktionaryParser):
 
             # H3 has word type
             h3s = soup.findAll("h3")
-            for h3 in h3s:        
-                wtypes.append(h3.find("span",{
-                    "class" : "mw-headline"
+            for h3 in h3s:
+                wtypes.append(h3.find("span", {
+                    "class": "mw-headline"
                     }).string)
-                    
+
             ols = soup.findAll("ol")
             for ol in ols:
                 def_list = []
@@ -64,10 +65,11 @@ class KNWiktionaryParser(WiktionaryParser):
                     for a in li.findAll("a"):
                         def_list.append(a.string)
                 meanings_list.append(def_list)
-                
+
             meanings['wtypes'] = wtypes
             meanings['definitions'] = meanings_list
         except Exception as e:
-            self.logger.errorlogger.exception('Something went wrong: {0}'.format(e.message))
+            self.logger.errorlogger.exception
+            ('Something went wrong: {0}'.format(e.message))
 
         return self._prepare_message(meanings)

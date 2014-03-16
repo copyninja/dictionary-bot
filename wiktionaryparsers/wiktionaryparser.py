@@ -10,8 +10,6 @@ class WiktionaryParser:
 </html>
 """
         self.logger = logger
-        
+
     def get_meaning(self, data):
         pass
-
-
