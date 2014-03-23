@@ -1,38 +1,61 @@
-from xml.etree import cElementTree as ET
 from BeautifulSoup import BeautifulSoup
 
 try:
     import simplejson as json
-except:
+except ImportError:
     import json
+
+try:
+    from functools import lru_cache
+except ImportError:
+    from repoze.lru import lru_cache
+import requests
+
+_wiki_url = "http://%s.wiktionary.org/w/api.php?action=parse&format=json" + \
+            "&prop=text|revid|displaytitle&callback=?&page=%s'"
+
+
+@lru_cache(maxsize=512)
+def fetch_meaning(langid, word):
+    r = requests.get(_wiki_url % (langid, word))
+    datajson = None
+    if r.status_code == 200:
+        try:
+            datajson = json.loads(r.text.split('(')[1].split(')')[0])
+        except Exception as e:
+            raise e
+
+        if "error" in datajson:
+            raise WiktionaryPageNotFound(langid, word)
+
+        return datajson
+
+
+class WiktionaryPageNotFound(Exception):
+
+    def __init__(self, langid, word):
+        self.langid = langid
+        self.word = word
+
+    def __str__(self):
+        print(">> page %s not found" % (_wiki_url % (self.langid, self.word)))
 
 
 class WiktionaryParser:
-    __slots__ = ["meanings", "xhtml_im_header", "xhtml_im_footer",
-                 "logger"]
+    __slots__ = ["meanings", "logger", "langid", "word"]
 
-    def __init__(self, logger):
-        self.xhtml_im_header = """
-<html xmlns='http://jabber.org/protocol/xhtml-im'>
-  <body xmlns='http://www.w3.org/1999/xhtml'>
-"""
-        self.xhtml_im_footer = """
-  </body>
-</html>
-"""
+    def __init__(self, langid, word, logger):
         self.logger = logger
+        self.langid = langid
+        self.word = word
 
-    def get_meaning(self, data):
+    def get_meaning(self):
         self.meanings = {}
         wtypes = []
         meanings_list = []
 
         try:
-            # Remove () from the output
-            tmp = data.lstrip('(').rstrip(')')
-            content = json.loads(tmp)
-
-            html_content = content.get('parse').get('text').get('*')
+            html_content = fetch_meaning(self.langid, self.word)
             soup = BeautifulSoup(html_content)
 
             # H3 has word type
@@ -55,31 +78,3 @@ class WiktionaryParser:
         except Exception as e:
             self.logger.errorlogger.exception
             ('Something went wrong: {0}'.format(e.message))
-
-    def prepare_message(self):
-        if len(self.meanings) > 0:
-            reply_body = ''
-            reply_xml = self.xhtml_im_header
-
-            # some time wiktionary does not contain word type
-            # i.e. verb noun etc. Process the below only if its present
-            if len(self.meanings.get('wtypes')) > 0:
-                i = 0
-                for wtype in self.meanings.get('wtypes'):
-                    reply_body += '\n' + wtype + ': \n'
-                    reply_xml += '<br/><strong>' + wtype + ': </strong><br/>'
-
-                    defs = ','.join(self.meanings.get('definitions')[i])
-                    reply_body += defs
-                    reply_xml += '<p>' + defs + '</p>'
-
-                    i += 1
-            else:
-                defs = ','.join(self.meanings.get('definitions')[0])
-                reply_body += defs
-                reply_xml = '<p>' + defs + '</p>'
-
-            reply_xml += self.xhtml_im_footer
-            ctree = ET.fromstring(reply_xml)
-            if len(reply_body) > 0:
-                return (reply_body, ctree)
