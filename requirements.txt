@@ -1,0 +1,4 @@
+sleekxmpp
+guesslanguage
+requests
+repoze.lru
