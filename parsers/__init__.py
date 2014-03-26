@@ -1,1 +1,0 @@
-from knwikiparser import KNWiktionaryParser

@@ -1,6 +1,0 @@
-#-*- mode: yaml -*-
----
-debug: 0
-default_lang: kn
-jabber:
-- {jid: samplebot@jabber.org, password: verysecret}

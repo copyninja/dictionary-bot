@@ -4,14 +4,13 @@
 import sys
 import os
 import sleekxmpp
-import yaml
 import logging
 
-from argparse import ArgumentParser
+from config import loadconfig
+from constants import *
 from multiprocessing import Process
 from bridge import ParserBridge
 from loghandler import LogHandler
-from constants import *
 
 # Python versions before 3.0 do not use UTF-8 encoding
 # by default. To ensure that Unicode is handled properly
@@ -114,7 +113,7 @@ def spawn_newbot(jid, password, logger, lang):
     if xmpp.connect():
         xmpp.process(block=True)
     else:
-        print "Unable to Connect."
+        print("Unable to Connect.")
 
 
 def main():
@@ -141,52 +140,26 @@ def main():
         custompathstem)\
         else '/etc/dictbot/dictbot.conf'
 
-    parser = ArgumentParser(description='A Jabber Dictionary Bot')
-    parser.add_argument(
-        '-j', '--jid',
-        help='Jabber ID for the bot to connect.',
-        required=False)
-    parser.add_argument(
-        '-p', '--password',
-        help='Password for Jabber account',
-        required=False)
-    parser.add_argument(
-        '-l', '--language',
-        help='Language for Jabber bot',
-        required=False)
-    parser.add_argument('-d', '--debug', help='set logging to DEBUG',
-                        action='store_const', dest='loglevel',
-                        const=logging.DEBUG, default=logging.DEBUG)
-
-    args = parser.parse_args()
-
-    configdict = yaml.load(file(config_file).read())
-
-    debug = logging.DEBUG if 'debug' in configdict and\
-        configdict.get('debug') == 1 else logging.ERROR
-
+    configdict = loadconfig(config_file)
+    debug = configdict.get('debug')
     jabber_records = configdict.get('jabber')
 
     logger = LogHandler(debug, log_file)
     logging.basicConfig(level=debug,
                         format='%(levelname)-8s %(message)s')
 
-    if len(jabber_records) == 0:
-        spawn_newbot(args.jid, args.password, logger, args.language)
+    if len(jabber_records) == 1:
+        spawn_newbot(jabber_records.get('jid'),
+                     jabber_records.get('password'), logger,
+                     jabber_records.get('lang'))
     else:
-        if len(jabber_records) == 1:
-            spawn_newbot(jabber_records.get('jid'),
-                         jabber_records.get('password'), logger,
-                         jabber_records.get('lang'))
-        else:
-            for acdetails in jabber_records:
-                print acdetails
-                p = Process(target=spawn_newbot,
-                            args=(acdetails.get('jid'),
-                                  acdetails.get('password'), logger,
-                                  acdetails.get('lang')))
-                p.start()
-                p.join(15)
+        for acdetails in jabber_records:
+            p = Process(target=spawn_newbot,
+                        args=(acdetails.get('jid'),
+                              acdetails.get('password'), logger,
+                              acdetails.get('lang')))
+            p.start()
+            p.join(15)
 
 
 if __name__ == "__main__":

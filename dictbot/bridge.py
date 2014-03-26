@@ -1,12 +1,7 @@
 #!/usr/bin/python
 
-from wiktionaryparsers.knwikiparser import KNWiktionaryParser,\
-    MLWiktionaryParser
+from parser import wiktionary
 from guesslanguage import getInstance
-from httphandler import connect
-
-__wiktionary_url__ = \
-'wiktionary.org/w/api.php?action=parse&format=json&prop=text|revid|displaytitle&callback=?&page='
 
 
 class ParserBridge:
@@ -29,23 +24,6 @@ class ParserBridge:
         self.langguesser = getInstance()
         self.logger = logger
         self.lang = lang
-
-        self.parserdict = {
-            'kn': KNWiktionaryParser(self.logger),
-            'ml': MLWiktionaryParser(self.logger),
-            }
-
-    def _process_word(self, langid, word):
-        parser = self.parserdict.get(langid)
-        url = 'http://' + langid.split('_')[0] + '.' + \
-              __wiktionary_url__ + word
-        data = connect(url)
-        if data and type(data).__name__ == 'str':
-            parser.get_meaning(data)
-            return parser.prepare_message()
-        else:
-            self.logger.errorlogger.exception(
-                'Something went wrong: {0} and {1}'.format(data.message, url))
 
     def process(self):
         message = None
