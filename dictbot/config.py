@@ -6,7 +6,7 @@ except ImportError:
     from yaml import Loader
 
 
-class IncompleteConfig(Exception):
+class IncompleteConfigError(Exception):
     def __init__(self, section, option):
         self.section = section
         self.option = option
@@ -28,10 +28,14 @@ def loadconfig(location="/etc/dictbot.conf"):
 
 def _verify(configdict):
     if not "jabber" in configdict:
-        raise IncompleteConfig("jabber", None)
+        raise IncompleteConfigError("jabber", None)
 
     if len(configdict.get('jabber')) == 0:
-        raise IncompleteConfig("jabber", "account")
+        raise IncompleteConfigError("jabber", "account")
+    else:
+        for acnt in configdict.get('jabber'):
+            if not "lang" in acnt:
+                raise IncompleteConfigError("account", "lang")
 
     if not "debug" in configdict:
         configdict['debug'] = False
