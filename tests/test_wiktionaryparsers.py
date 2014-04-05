@@ -15,7 +15,7 @@ from dictbot.parsers.mlwiktionary import MLWiktionaryParser
 def data_from_resource(filename):
     with open(filename) as fd:
         content = fd.read()
-        return json.loads(content.split('(',1)[1].rsplit(')',1)[0])
+        return json.loads(content.split('(', 1)[1].rsplit(')', 1)[0])
 
 
 @patch.object(KNWiktionaryParser, 'fetch_meaning')
