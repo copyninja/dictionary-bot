@@ -1,4 +1,4 @@
-from dictbot.parsers.wiktionary import WiktionaryParser
+from dictbot.wiktionary import WiktionaryParser
 
 
 class MLWiktionaryParser(WiktionaryParser):
@@ -16,6 +16,9 @@ class MLWiktionaryParser(WiktionaryParser):
 
     def get_meaning(self, word):
         return super(MLWiktionaryParser, self).get_meaning(word)
+
+    def get_supported_lang(self):
+        return "ml"
 
 
 def get_instance():

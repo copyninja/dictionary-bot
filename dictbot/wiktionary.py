@@ -89,3 +89,7 @@ class WiktionaryParser(object):
         meanings['wtypes'] = wtypes
         meanings['definitions'] = meanings_list
         return meanings
+
+    @abstractmethod
+    def get_supported_lang(self):
+        "Returns the language supported by the current parser"

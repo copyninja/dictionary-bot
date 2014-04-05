@@ -1,4 +1,4 @@
-from dictbot.parsers.wiktionary import WiktionaryParser
+from dictbot.wiktionary import WiktionaryParser
 
 
 class KNWiktionaryParser(WiktionaryParser):
@@ -16,6 +16,9 @@ class KNWiktionaryParser(WiktionaryParser):
 
     def get_meaning(self, word):
         return super(KNWiktionaryParser, self).get_meaning(word)
+
+    def get_supported_lang(self):
+        return "kn"
 
 
 def get_instance():
