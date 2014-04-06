@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-from guesslanguage import getInstance
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 try:
@@ -41,7 +40,6 @@ class WiktionaryParser(object):
     @langid.setter
     def langid(self, lang):
         self._langid = lang
-        self._langguesser = getInstance()
 
     @staticmethod
     @lru_cache(maxsize=512)
