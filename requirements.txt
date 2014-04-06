@@ -2,4 +2,4 @@ sleekxmpp
 requests
 #repoze.lru 2.7 only
 #mock 2.7 to 3.2
-bs4
+beautifulsoup4
