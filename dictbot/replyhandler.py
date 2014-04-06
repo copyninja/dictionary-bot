@@ -1,11 +1,9 @@
 from xml.etree import cElementTree as ET
 
 
-class XMPPReplyMessage:
-    __slots__ = ["im_header", "im_footer", "reply"]
+class ReplyMessage:
 
-    def __init__(self, meanings):
-        self.reply = self._prepare_message(meanings)
+    def __init__(self):
         self.im_header = """
 <html xmlns='http://jabber.org/protocol/xhtml-im'>
   <body xmlns='http://www.w3.org/1999/xhtml'>
@@ -15,7 +13,7 @@ class XMPPReplyMessage:
 </html>
 """
 
-    def _prepare_message(self, meanings):
+    def prepare_meaning_reply(self, meanings):
         if len(meanings) > 0:
             reply_body = ''
             reply_xml = self.xhtml_im_header
