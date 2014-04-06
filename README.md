@@ -1,7 +1,7 @@
 Dictionary Bot
 ==============
 
-[![Build Status](https://travis-ci.org/copyninja/dictionary-bot)](https://travis-ci.org/copyninja/dictionary-bot)
+[![Build Status](https://travis-ci.org/copyninja/dictionary-bot.png)](https://travis-ci.org/copyninja/dictionary-bot)
 
 This is a extensible an XMPP based bot for fetching meanings for given
 word from various sources. Currently implemented source is Wiktionary
