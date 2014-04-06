@@ -7,7 +7,6 @@ else:
     import mock
 
 import json
-from mock import patch
 from dictbot.parsers.knwiktionary import KNWiktionaryParser
 from dictbot.parsers.mlwiktionary import MLWiktionaryParser
 
@@ -18,7 +17,7 @@ def data_from_resource(filename):
         return json.loads(content.split('(', 1)[1].rsplit(')', 1)[0])
 
 
-@patch.object(KNWiktionaryParser, 'fetch_meaning')
+@mock.patch.object(KNWiktionaryParser, 'fetch_meaning')
 def test_knwiktionaryparser(mock_method):
     mock_method.return_value = data_from_resource(
         "tests/resources/parsers/kn.dat")["parse"]["text"]["*"]
@@ -32,7 +31,7 @@ def test_knwiktionaryparser(mock_method):
     assert actoutput == expectoutput
 
 
-@patch.object(MLWiktionaryParser, 'fetch_meaning')
+@mock.patch.object(MLWiktionaryParser, 'fetch_meaning')
 def test_mlwiktionaryparser(mock_method):
     mock_method.return_value = data_from_resource(
         "tests/resources/parsers/ml.dat")["parse"]["text"]["*"]
