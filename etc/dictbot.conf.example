@@ -2,5 +2,16 @@
 ---
 debug: 1
 jabber:
- - {jid: jid1@domain.org, password: secret1, lang: langid1}
- - {jid: jid2@domain.org, password: secret2, lang: langid2}
+ - {
+ jid: jid1@domain.org,
+ password: secret1,
+ lang: langid1,
+ plugins:
+   - wiktionary}
+ - {
+ jid: jid2@domain.org,
+ password: secret2,
+ lang: langid2,
+ plugins:
+   - wiktionary
+   }

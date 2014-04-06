@@ -1,5 +1,4 @@
-from dictbot.config import loadconfig, IncompleteConfigError,\
-    ParserFileMissingError
+from dictbot.config import loadconfig, IncompleteConfigError
 
 
 def test_validconfig():
@@ -7,7 +6,6 @@ def test_validconfig():
     cdict = loadconfig("tests/resources/confs/valid.conf")
     assert ("debug" in cdict) is True
     assert ("jabber" in cdict) is True
-    assert ("parsers" in cdict) is True
 
 
 def test_invalidconfig():
@@ -17,11 +15,6 @@ def test_invalidconfig():
     except IncompleteConfigError as i:
         assert i.section == "jabber"
         assert i.option is None
-
-    try:
-        loadconfig("tests/resources/confs/invalid-parser.conf")
-    except ParserFileMissingError as p:
-        assert p.parser == "somewiktionary"
 
     try:
         loadconfig("tests/resources/confs/missing-accounts.conf")
@@ -46,3 +39,15 @@ def test_invalidconfig():
     except IncompleteConfigError as i:
         assert i.section == "account"
         assert i.option == "lang"
+
+    try:
+        loadconfig("tests/resources/confs/missing-plugin.conf")
+    except IncompleteConfigError as i:
+        assert i.section == "account"
+        assert i.option == "plugins"
+
+    try:
+        loadconfig("tests/resources/confs/empty-plugins.conf")
+    except IncompleteConfigError as i:
+        assert i.section == "account"
+        assert i.option == "plugins"
