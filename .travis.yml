@@ -7,6 +7,8 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install coveralls
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install mock repoze.lru ; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install mock ; fi
 script: make travis
 after_success: coveralls
 notifications:
