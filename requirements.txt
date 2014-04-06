@@ -3,3 +3,4 @@ requests
 #repoze.lru 2.7 only
 #mock 2.7 to 3.2
 beautifulsoup4
+flake8
