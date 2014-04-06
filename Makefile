@@ -1,5 +1,5 @@
 travis:
-	nosetests -s --with-coverage --cover-pacakge dictbot
+	nosetests -s --with-coverage --cover-package=dictbot
 	flake8 dictbot
 
 clean:
