@@ -12,9 +12,9 @@ directory which will be loaded during run time.
 
 TODO
 ----
-*~Enable multiple account login~
+* ~Enable multiple account login~
 * Enable meaning collection using XEP-0004 (DataForms)
-*~Move the xml construction logic totally to bridge to avoid polluting
+* ~Move the xml construction logic totally to bridge to avoid polluting
    wiktionary parsers~
-*~Write test cases~
-*~Enable CI for continuous integration~
+* ~Write test cases~
+* ~Enable CI for continuous integration~
