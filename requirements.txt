@@ -1,4 +1,4 @@
 sleekxmpp
-guesslanguage
 requests
 repoze.lru
+mock
