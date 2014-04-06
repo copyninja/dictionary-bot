@@ -1,1 +1,1 @@
-from wiktionary import WiktionaryParser, WiktionaryPageNotFound
+
