@@ -27,7 +27,7 @@ def loadconfig(location="/etc/dictbot.conf"):
 
 
 def _verify(configdict):
-    if not "jabber" in configdict:
+    if "jabber" not in configdict:
         raise IncompleteConfigError("jabber", None)
 
     if configdict.get('jabber') is None or \
@@ -35,16 +35,16 @@ def _verify(configdict):
         raise IncompleteConfigError("jabber", "account")
     else:
         for acnt in configdict.get('jabber'):
-            if not "lang" in acnt:
+            if "lang" not in acnt:
                 raise IncompleteConfigError("account", "lang")
-            elif not "jid" in acnt:
+            elif "jid" not in acnt:
                 raise IncompleteConfigError("account", "jid")
-            elif not "password" in acnt:
+            elif "password" not in acnt:
                 raise IncompleteConfigError("account", "password")
-            elif not "plugins" in acnt or len(acnt["plugins"]) is None:
+            elif "plugins" not in acnt or len(acnt["plugins"]) == 0:
                 raise IncompleteConfigError("account", "plugins")
 
-    if not "debug" in configdict:
+    if "debug" not in configdict:
         configdict['debug'] = False
     else:
         configdict['debug'] = True if configdict['debug'] == 1 else False
